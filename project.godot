@@ -11,8 +11,20 @@ config_version=5
 [application]
 
 config/name="Sapta Project"
+run/main_scene="uid://bkfix1x2juxyy"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+SceneManager="*uid://bgbxbt0hu5wwc"
+UiManager="*uid://coughonvqyps4"
+GameManager="*uid://ci7fhhxwimr23"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
 
 [physics]
 

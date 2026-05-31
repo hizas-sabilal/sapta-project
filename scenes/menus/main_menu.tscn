@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://mdoy25be4hms"]
+
+[ext_resource type="Script" uid="uid://lgirwsyfp4u3" path="res://scenes/menus/main_menu.gd" id="1_xqga4"]
+
+[node name="Control" type="Control" unique_id=562240816]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="." unique_id=1748321927]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+
+[node name="CenterContainer" type="CenterContainer" parent="Panel" unique_id=1771818913]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_right = 180.0
+offset_bottom = 720.0
+grow_horizontal = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/CenterContainer" unique_id=1308963122]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=566312097]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "Start"
+script = ExtResource("1_xqga4")
+
+[node name="OptionsButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=1967221872]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "Options"
+
+[node name="ExitButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=491050211]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "Exit"
+
+[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/StartButton" to="Panel/CenterContainer/VBoxContainer/StartButton" method="_on_start_button_pressed"]

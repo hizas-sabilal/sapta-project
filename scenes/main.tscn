@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bkfix1x2juxyy"]
+
+[ext_resource type="Script" uid="uid://benw16lg133ko" path="res://scenes/main.gd" id="1_o5qli"]
+
+[node name="Main" type="Node" unique_id=1107566088]
+script = ExtResource("1_o5qli")
+
+[node name="LevelContainer" type="Node" parent="." unique_id=1751131642]
+
+[node name="UserInterfaceContainer" type="CanvasLayer" parent="." unique_id=988814348]
+
+[node name="OverlayContainer" type="CanvasLayer" parent="." unique_id=507071370]
