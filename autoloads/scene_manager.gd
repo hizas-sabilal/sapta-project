@@ -12,7 +12,7 @@ func go_to_main_menu() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU)
 
 func start_game() -> void:
-	get_tree().change_scene_to_file(LEVEL_001)
+	change_level(LEVEL_001)
 
 func change_level(scene_path: String):
 	for child in level_container.get_children():
