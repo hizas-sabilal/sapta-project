@@ -4,6 +4,7 @@ var level_container: Node
 
 const MAIN_MENU := "res://scenes/main_menu.tscn"
 const LEVEL_001 := "res://scenes/levels/level_001.tscn"
+const BATTLE_SCENE := "res://scenes/battles/battle_scene.tscn"
 
 func initialize(container: Node):
 		level_container = container
@@ -22,3 +23,6 @@ func change_level(scene_path: String):
 	
 	var scene = load(scene_path).instantiate()
 	level_container.add_child(scene)
+	
+func battle_triggered():
+	change_level(BATTLE_SCENE)

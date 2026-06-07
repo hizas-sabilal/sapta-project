@@ -223,3 +223,5 @@ frame_progress = 0.13522215
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Monsta/BattleTrigger" unique_id=735830350]
 position = Vector2(2, 26)
 shape = SubResource("RectangleShape2D_xuuhx")
+
+[connection signal="body_entered" from="Level001/Monsta/BattleTrigger" to="Level001/Player 1" method="_on_battle_trigger_body_entered"]

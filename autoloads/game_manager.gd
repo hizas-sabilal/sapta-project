@@ -3,7 +3,8 @@ extends Node
 enum GameState {
 	MENU,
 	PLAYING,
-	PAUSED
+	PAUSED,
+	BATTLE
 }
 
 var state: GameState
@@ -35,12 +36,9 @@ func resume_game() -> void:
 	state = GameState.PLAYING
 	get_tree().paused = false
 	UiManager.hide_pause_menu()
-#
-#
-#func toggle_pause() -> void:
-#
-	#if state == GameState.PLAYING:
-		#pause_game()
-#
-	#elif state == GameState.PAUSED:
-		#resume_game()
+
+func enter_battle() -> void:
+	if state != GameState.PLAYING:
+		return
+	state = GameState.BATTLE
+	SceneManager.battle_triggered()

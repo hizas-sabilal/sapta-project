@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bkfix1x2juxyy"]
 
 [ext_resource type="Script" uid="uid://benw16lg133ko" path="res://scenes/main.gd" id="1_o5qli"]
-[ext_resource type="Script" uid="uid://ct1dmi0lm3dkl" path="res://scenes/input_handler.gd" id="2_0wfyh"]
+[ext_resource type="Script" path="res://scenes/input_handler.gd" id="2_0wfyh"]
 
 [node name="Main" type="Node" unique_id=1107566088]
 script = ExtResource("1_o5qli")
