@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://dg34wnu8dansm" path="res://resources/tiles/terrain_grass_block_top.png" id="3_73sk4"]
 [ext_resource type="Texture2D" uid="uid://y2w5k868l20e" path="res://resources/tiles/terrain_grass_block_center.png" id="4_2v262"]
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="5_0pr2y"]
+[ext_resource type="Texture2D" uid="uid://dd5ie6v7vn5b3" path="res://resources/monsters/monsta/monst_idle.png" id="6_xuuhx"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_lquwl"]
 atlas = ExtResource("2_xuuhx")
@@ -115,6 +116,52 @@ sources/1 = SubResource("TileSetAtlasSource_rfwyl")
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_lquwl"]
 distance = -219.0
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_73sk4"]
+atlas = ExtResource("6_xuuhx")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2v262"]
+atlas = ExtResource("6_xuuhx")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0pr2y"]
+atlas = ExtResource("6_xuuhx")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xvm4i"]
+atlas = ExtResource("6_xuuhx")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2wwi2"]
+atlas = ExtResource("6_xuuhx")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_x7efi"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_73sk4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2v262")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0pr2y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xvm4i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2wwi2")
+}],
+"loop": true,
+"name": &"Idle",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xuuhx"]
+size = Vector2(64, 73.5)
+
 [node name="Root" type="Node" unique_id=913775974]
 
 [node name="Level001" type="Node2D" parent="." unique_id=1378030795]
@@ -159,3 +206,20 @@ shape = SubResource("WorldBoundaryShape2D_lquwl")
 position = Vector2(693, 197)
 scale = Vector2(0.6, 0.6)
 texture = ExtResource("5_0pr2y")
+
+[node name="Monsta" type="CharacterBody2D" parent="Level001" unique_id=168540931]
+position = Vector2(66, 107)
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Level001/Monsta" unique_id=584002741]
+sprite_frames = SubResource("SpriteFrames_x7efi")
+animation = &"Idle"
+autoplay = "Idle"
+frame_progress = 0.13522215
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Monsta" unique_id=1421618203]
+
+[node name="BattleTrigger" type="Area2D" parent="Level001/Monsta" unique_id=1670836305]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Monsta/BattleTrigger" unique_id=735830350]
+position = Vector2(2, 26)
+shape = SubResource("RectangleShape2D_xuuhx")

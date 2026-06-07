@@ -15,7 +15,6 @@ func init_game() -> void:
 
 func start_game() -> void:
 	if state != GameState.MENU:
-		print("Game state failure! [E001]")
 		return
 	state = GameState.PLAYING
 	await SceneManager.start_game()
