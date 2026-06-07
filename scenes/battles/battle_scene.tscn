@@ -1,3 +1,9 @@
 [gd_scene format=3 uid="uid://bx5n57it8cjvx"]
 
+[ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="1_g0lu4"]
+
 [node name="BattleScene" type="Node2D" unique_id=510226263]
+
+[node name="Background (Sprint2D)" type="Sprite2D" parent="." unique_id=1086907406]
+position = Vector2(901, 331)
+texture = ExtResource("1_g0lu4")
