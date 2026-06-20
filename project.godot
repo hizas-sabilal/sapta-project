@@ -26,6 +26,10 @@ GameManager="*uid://ci7fhhxwimr23"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 
+[global_group]
+
+battle_manager=""
+
 [input]
 
 pause={

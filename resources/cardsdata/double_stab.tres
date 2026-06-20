@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CardData" format=3 uid="uid://v6ah4itwelmu"]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_rpkui"]
+
+[resource]
+script = ExtResource("1_rpkui")
+card_name = "Double Stab"
+damage = 9
+cost = 2
+description = "You deal 9 damage to enemy."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

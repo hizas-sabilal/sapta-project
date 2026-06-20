@@ -1,9 +1,39 @@
 [gd_scene format=3 uid="uid://bx5n57it8cjvx"]
 
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="1_g0lu4"]
+[ext_resource type="Script" uid="uid://de5bx244x1ph2" path="res://scripts/battle_manager.gd" id="1_gvb6n"]
 
-[node name="BattleScene" type="Node2D" unique_id=510226263]
+[node name="BattleScene" type="Node2D" unique_id=510226263 groups=["battle_manager"]]
+script = ExtResource("1_gvb6n")
 
-[node name="Background (Sprint2D)" type="Sprite2D" parent="." unique_id=1086907406]
-position = Vector2(901, 331)
+[node name="Background" type="Sprite2D" parent="." unique_id=1086907406]
+position = Vector2(781, 293)
+scale = Vector2(0.7621528, 0.78240734)
 texture = ExtResource("1_g0lu4")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1898062980]
+
+[node name="BattleUI" type="Control" parent="CanvasLayer" unique_id=1783724811]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 2.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterContainer" type="HBoxContainer" parent="CanvasLayer/BattleUI" unique_id=1449817548]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 3.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HandContainer" type="HBoxContainer" parent="CanvasLayer/BattleUI/CenterContainer" unique_id=1550425702]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 0
