@@ -2,6 +2,7 @@ extends Node
 
 var level_container: Node
 
+
 const MAIN_MENU := "res://scenes/main_menu.tscn"
 const LEVEL_001 := "res://scenes/levels/level_001.tscn"
 const BATTLE_SCENE := "res://scenes/battles/battle_scene.tscn"

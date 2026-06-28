@@ -8,6 +8,7 @@ enum GameState {
 }
 
 var state: GameState
+var current_enemy: EnemyData
 
 func init_game() -> void:
 	state = GameState.MENU
