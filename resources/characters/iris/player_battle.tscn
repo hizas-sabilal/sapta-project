@@ -1,0 +1,116 @@
+[gd_scene format=3 uid="uid://0c57d5bgiavd"]
+
+[ext_resource type="Script" uid="uid://c5k2qwcyo1xd0" path="res://resources/characters/iris/player_battle.gd" id="1_0tehv"]
+[ext_resource type="Texture2D" uid="uid://ddltsgrnhnfrg" path="res://resources/characters/iris/Attack_1.png" id="1_csc4f"]
+[ext_resource type="Texture2D" uid="uid://l6pio3df3yua" path="res://resources/characters/iris/Hurt.png" id="2_0tehv"]
+[ext_resource type="Texture2D" uid="uid://c4d1dl3ys65xv" path="res://resources/characters/iris/iris_idle.png" id="3_eyd3p"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iatti"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dmvfx"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_orufx"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4gbh4"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b02yc"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cjym0"]
+atlas = ExtResource("2_0tehv")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8pyyq"]
+atlas = ExtResource("2_0tehv")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e0hf0"]
+atlas = ExtResource("3_eyd3p")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3gtsk"]
+atlas = ExtResource("3_eyd3p")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bjfcw"]
+atlas = ExtResource("3_eyd3p")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_07pxu"]
+atlas = ExtResource("3_eyd3p")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lhjbw"]
+atlas = ExtResource("3_eyd3p")
+region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_e6a1h"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iatti")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dmvfx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_orufx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4gbh4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b02yc")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cjym0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8pyyq")
+}],
+"loop": false,
+"name": &"hurt",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e0hf0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3gtsk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bjfcw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_07pxu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lhjbw")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[node name="PlayerBattle" type="Node2D" unique_id=178275334 groups=["player"]]
+script = ExtResource("1_0tehv")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1983936544]
+sprite_frames = SubResource("SpriteFrames_e6a1h")
+animation = &"idle"
+frame_progress = 0.08299358
