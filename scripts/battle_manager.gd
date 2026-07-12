@@ -9,6 +9,7 @@ var selected_cards = []
 var discard_pile= []
 
 var player
+var enemy
 
 const MAX_CARD_IN_HAND = 3
 const ACTION_POINT = 3
@@ -22,7 +23,8 @@ func _ready() -> void:
 	
 	#LOAD ENTITIES
 	player = get_tree().get_first_node_in_group("player")
-	
+	enemy = get_tree().get_first_node_in_group("enemies")
+	enemy
 	#START PLAYER TURN
 	start_player_turn()
 	
@@ -64,7 +66,15 @@ func end_player_turn():
 	enemy_turn()
 
 func enemy_turn():
-	pass
+	var damage = enemy.attack()
+	print("Enemy attacks: ", damage)
+
+	player.take_damage(damage)
+	await enemy.play_attack()
+	await player.play_hurt()
+	
+	await get_tree().create_timer(1.0).timeout
+	start_player_turn()
 
 func select_card(card):
 	
@@ -97,9 +107,9 @@ func execute_turn():
 		print(card.data.damage)
 		
 		if(card.data.damage > 0):
-			#zombie.take_damage(card.data.damage)
+			enemy.take_damage(card.data.damage)
 			await player.play_attack()
-			#await zombie.play_hurt()
+			await enemy.play_hurt()
 			
 		if(card.data.heal > 0):
 			player.heal(card.data.heal)
@@ -111,3 +121,4 @@ func execute_turn():
 		card.queue_free()
 	
 	selected_cards.clear()
+	end_player_turn()

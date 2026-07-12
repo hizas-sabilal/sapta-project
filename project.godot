@@ -30,6 +30,7 @@ window/size/viewport_height=720
 
 battle_manager=""
 player=""
+enemies=""
 
 [input]
 
