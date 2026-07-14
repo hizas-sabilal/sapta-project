@@ -2,6 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="1_g0lu4"]
 [ext_resource type="Script" uid="uid://de5bx244x1ph2" path="res://scripts/battle_manager.gd" id="1_gvb6n"]
+[ext_resource type="PackedScene" uid="uid://0c57d5bgiavd" path="res://resources/characters/iris/player_battle.tscn" id="3_vjuxw"]
+[ext_resource type="PackedScene" uid="uid://cx4ip07tftmes" path="res://resources/monsters/vampire/vampire.tscn" id="4_3obht"]
 
 [node name="BattleScene" type="Node2D" unique_id=510226263 groups=["battle_manager"]]
 script = ExtResource("1_gvb6n")
@@ -28,6 +30,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 15.0
 offset_right = 3.0
 offset_bottom = -1.0
 grow_horizontal = 2
@@ -37,3 +40,25 @@ grow_vertical = 2
 layout_mode = 2
 size_flags_horizontal = 6
 size_flags_vertical = 0
+
+[node name="ExecuteButton" type="Button" parent="CanvasLayer/BattleUI" unique_id=1673912607]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -75.0
+offset_top = 265.0
+offset_right = 75.0
+offset_bottom = 310.0
+grow_horizontal = 2
+text = "Action!"
+
+[node name="PlayerBattle" parent="." unique_id=178275334 instance=ExtResource("3_vjuxw")]
+position = Vector2(219, 587)
+scale = Vector2(2, 2)
+
+[node name="Vampire" parent="." unique_id=911978628 instance=ExtResource("4_3obht")]
+position = Vector2(1032, 590)
+scale = Vector2(2, 2)
+
+[connection signal="pressed" from="CanvasLayer/BattleUI/ExecuteButton" to="." method="_on_execute_button_pressed"]

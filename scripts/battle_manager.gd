@@ -6,6 +6,10 @@ var hand = []
 var card_scene = preload("res://scenes/battles/card_ui.tscn")
 var hand_container
 var selected_cards = []
+var discard_pile= []
+
+var player
+var enemy
 
 const MAX_CARD_IN_HAND = 3
 const ACTION_POINT = 3
@@ -17,6 +21,10 @@ func _ready() -> void:
 	hand_container = $CanvasLayer/BattleUI/CenterContainer/HandContainer
 	setup_deck()
 	
+	#LOAD ENTITIES
+	player = get_tree().get_first_node_in_group("player")
+	enemy = get_tree().get_first_node_in_group("enemies")
+	enemy
 	#START PLAYER TURN
 	start_player_turn()
 	
@@ -54,7 +62,19 @@ func start_player_turn():
 	used_AP = 0
 	draw_hand()
 
-#TODO enemy turn
+func end_player_turn():
+	enemy_turn()
+
+func enemy_turn():
+	var damage = enemy.attack()
+	print("Enemy attacks: ", damage)
+
+	player.take_damage(damage)
+	await enemy.play_attack()
+	await player.play_hurt()
+	
+	await get_tree().create_timer(1.0).timeout
+	start_player_turn()
 
 func select_card(card):
 	
@@ -75,3 +95,30 @@ func select_card(card):
 		print("usedAP:", used_AP)
 	else:
 		print("Max AP")
+
+func _on_execute_button_pressed() -> void:
+	execute_turn()
+
+func execute_turn():
+	print("EXECUTE TURN")
+	
+	for card in selected_cards:
+		print(card.data.card_name)
+		print(card.data.damage)
+		
+		if(card.data.damage > 0):
+			enemy.take_damage(card.data.damage)
+			await player.play_attack()
+			await enemy.play_hurt()
+			
+		if(card.data.heal > 0):
+			player.heal(card.data.heal)
+			
+	#REMOVE EXECUTED CARD
+	for card in selected_cards:
+		discard_pile.append(card.data)
+		hand.erase(card)
+		card.queue_free()
+	
+	selected_cards.clear()
+	end_player_turn()
