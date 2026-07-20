@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://y2w5k868l20e" path="res://resources/tiles/terrain_grass_block_center.png" id="4_2v262"]
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="5_0pr2y"]
 [ext_resource type="Texture2D" uid="uid://dd5ie6v7vn5b3" path="res://resources/monsters/monsta/monst_idle.png" id="6_xuuhx"]
+[ext_resource type="Script" uid="uid://b5ieffqpqeyom" path="res://scripts/battle_trigger.gd" id="8_2v262"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_lquwl"]
 atlas = ExtResource("2_xuuhx")
@@ -257,6 +258,7 @@ texture = ExtResource("5_0pr2y")
 
 [node name="Monsta" type="CharacterBody2D" parent="Level001" unique_id=168540931]
 position = Vector2(66, 107)
+metadata/Enemies = "zombie_easy_female"
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Level001/Monsta" unique_id=584002741]
 sprite_frames = SubResource("SpriteFrames_x7efi")
@@ -267,9 +269,8 @@ frame_progress = 0.13522215
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Monsta" unique_id=1421618203]
 
 [node name="BattleTrigger" type="Area2D" parent="Level001/Monsta" unique_id=1670836305]
+script = ExtResource("8_2v262")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Monsta/BattleTrigger" unique_id=735830350]
 position = Vector2(2, 26)
 shape = SubResource("RectangleShape2D_xuuhx")
-
-[connection signal="body_entered" from="Level001/Monsta/BattleTrigger" to="Level001/Player 1" method="_on_battle_trigger_body_entered"]

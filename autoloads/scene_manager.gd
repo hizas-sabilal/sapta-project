@@ -2,7 +2,6 @@ extends Node
 
 var level_container: Node
 
-
 const MAIN_MENU := "res://scenes/main_menu.tscn"
 const LEVEL_001 := "res://scenes/levels/level_001.tscn"
 const BATTLE_SCENE := "res://scenes/battles/battle_scene.tscn"
@@ -25,5 +24,12 @@ func change_level(scene_path: String):
 	var scene = load(scene_path).instantiate()
 	level_container.add_child(scene)
 	
-func battle_triggered():
-	change_level(BATTLE_SCENE)
+func battle_triggered(enemies):
+	for child in level_container.get_children():
+		child.queue_free()
+
+	await get_tree().process_frame
+	
+	var scene = load(BATTLE_SCENE).instantiate()
+	scene.set_enemies(enemies)
+	level_container.add_child(scene)

@@ -18,13 +18,13 @@ region = Rect2(128, 0, 128, 128)
 atlas = ExtResource("1_csc4f")
 region = Rect2(256, 0, 128, 128)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_4gbh4"]
-atlas = ExtResource("1_csc4f")
-region = Rect2(384, 0, 128, 128)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_b02yc"]
 atlas = ExtResource("1_csc4f")
 region = Rect2(512, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4gbh4"]
+atlas = ExtResource("1_csc4f")
+region = Rect2(384, 0, 128, 128)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ttlq1"]
 atlas = ExtResource("3_iatti")
@@ -107,10 +107,10 @@ animations = [{
 "texture": SubResource("AtlasTexture_orufx")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_4gbh4")
+"texture": SubResource("AtlasTexture_b02yc")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_b02yc")
+"texture": SubResource("AtlasTexture_4gbh4")
 }],
 "loop": false,
 "name": &"attack",
@@ -189,5 +189,5 @@ script = ExtResource("1_0tehv")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1983936544]
 sprite_frames = SubResource("SpriteFrames_e6a1h")
 animation = &"attack"
-frame = 4
+frame = 3
 frame_progress = 1.0

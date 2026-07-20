@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-const SPEED = 300.0
+const SPEED = 100
 const JUMP_VELOCITY = -400.0
 
 @onready var sprite = $AnimatedSprite2D
@@ -36,6 +36,6 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
-func _on_battle_trigger_body_entered(body: Node2D) -> void:
-	if body.is_in_group("player"):
-		GameManager.enter_battle()
+#func _on_battle_trigger_body_entered(body: Node2D) -> void:
+	#if body.is_in_group("player"):
+#d		GameManager.enter_battle()

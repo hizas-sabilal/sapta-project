@@ -3,7 +3,6 @@
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="1_g0lu4"]
 [ext_resource type="Script" uid="uid://de5bx244x1ph2" path="res://scripts/battle_manager.gd" id="1_gvb6n"]
 [ext_resource type="PackedScene" uid="uid://0c57d5bgiavd" path="res://resources/characters/iris/player_battle.tscn" id="3_vjuxw"]
-[ext_resource type="PackedScene" uid="uid://cx4ip07tftmes" path="res://resources/monsters/vampire/vampire.tscn" id="4_3obht"]
 
 [node name="BattleScene" type="Node2D" unique_id=510226263 groups=["battle_manager"]]
 script = ExtResource("1_gvb6n")
@@ -57,7 +56,7 @@ text = "Action!"
 position = Vector2(219, 587)
 scale = Vector2(2, 2)
 
-[node name="Vampire" parent="." unique_id=911978628 instance=ExtResource("4_3obht")]
+[node name="EnemyContainer" type="Node2D" parent="." unique_id=1221448299]
 position = Vector2(1032, 590)
 scale = Vector2(2, 2)
 
