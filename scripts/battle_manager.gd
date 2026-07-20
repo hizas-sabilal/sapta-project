@@ -2,33 +2,66 @@ extends Node2D
 
 var deck = []
 var hand = []
-
 var card_scene = preload("res://scenes/battles/card_ui.tscn")
-var hand_container
+
+@onready var enemy_container = $EnemyContainer
+@onready var hand_container = $CanvasLayer/BattleUI/CenterContainer/HandContainer
+@onready var player = $PlayerBattle
+
+# Store references to enemies
+var enemies_to_spawn: PackedStringArray = []
+var enemy: Node2D # Represents the active enemy
+
+var enemy_scene
+var enemy_instance
+
 var selected_cards = []
 var discard_pile= []
-
-var player
-var enemy
 
 const MAX_CARD_IN_HAND = 3
 const ACTION_POINT = 3
 var used_AP := 0
 
-# Called when the node enters the scene tree for the first time.
+# 1. Configuration method called BEFORE adding to scene tree
+func set_enemies(enemies: PackedStringArray) -> void:
+	enemies_to_spawn = enemies
+# 2. Initialization is handled once in the tree
 func _ready() -> void:
-	#LOAD CARD DECK
-	hand_container = $CanvasLayer/BattleUI/CenterContainer/HandContainer
 	setup_deck()
 	
-	#LOAD ENTITIES
-	player = get_tree().get_first_node_in_group("player")
-	enemy = get_tree().get_first_node_in_group("enemies")
-	enemy
-	#START PLAYER TURN
-	start_player_turn()
+	# Spawn the configured enemies
+	_spawn_enemies()
 	
-
+	# Start game loop
+	if player and enemy:
+		start_player_turn()
+	else:
+		push_error("Failed to initialize player or enemy correctly.")
+func _spawn_enemies() -> void:
+	if enemies_to_spawn.is_empty():
+		push_error("No enemies configured to spawn!")
+		return
+		
+	var enemy_key = enemies_to_spawn[0] # Grab the first enemy safely
+	
+	# Safe guard dictionary lookup
+	if not Constants.ENEMIES.has(enemy_key):
+		push_error("Enemy key '%s' not found in Constants.ENEMIES" % enemy_key)
+		return
+		
+	var enemy_path = Constants.ENEMIES[enemy_key]
+	var enemy_scene = load(enemy_path)
+	
+	if enemy_scene:
+		var enemy_instance = enemy_scene.instantiate()
+		if enemy_container:
+			enemy_container.add_child(enemy_instance)
+			enemy = enemy_instance # Direct assignment! Safe and fast.
+		else:
+			push_error("EnemyContainer node is missing in the scene tree!")
+	else:
+		push_error("Failed to load enemy scene at path: " + enemy_path)
+	
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

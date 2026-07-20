@@ -8,6 +8,7 @@ enum GameState {
 }
 
 var state: GameState
+var current_enemy: EnemyData
 
 func init_game() -> void:
 	state = GameState.MENU
@@ -37,8 +38,8 @@ func resume_game() -> void:
 	get_tree().paused = false
 	UiManager.hide_pause_menu()
 
-func enter_battle() -> void:
+func enter_battle(enemies: PackedStringArray) -> void:
 	if state != GameState.PLAYING:
 		return
 	state = GameState.BATTLE
-	SceneManager.battle_triggered()
+	SceneManager.battle_triggered(enemies)
