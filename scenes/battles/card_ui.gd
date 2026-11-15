@@ -21,11 +21,13 @@ const TYPE_COLORS := {
 	CardData.Type.DEBUFF: Color(0.62, 0.38, 0.88),
 }
 const SELECTED_BORDER := Color(1.0, 0.85, 0.3)
+const FOCUS_BORDER := Color(1.0, 1.0, 1.0)
 
 @export var data: CardData
 
 var selected := false
 var _hovered := false
+var _focused := false ## Keyboard cursor is on this card.
 var _playable := true
 
 var _body: Panel
@@ -155,16 +157,28 @@ func set_playable(value: bool) -> void:
 	_playable = value
 	_update_look()
 
+## Keyboard cursor highlight.
+func set_focused(value: bool) -> void:
+	_focused = value
+	_update_look()
+
 func _update_look() -> void:
 	if _body == null:
 		return
 	var lift := 0.0
 	if selected:
 		lift = LIFT_ROOM
-	elif _hovered and _playable:
+	elif _focused or (_hovered and _playable):
 		lift = HOVER_LIFT
 	_body.position.y = LIFT_ROOM - lift
-	_frame_style.border_color = SELECTED_BORDER if selected \
-		else TYPE_COLORS.get(data.type, Color.GRAY)
-	_frame_style.set_border_width_all(5 if selected else 3)
+	var border: Color = TYPE_COLORS.get(data.type, Color.GRAY)
+	var width := 3
+	if selected:
+		border = SELECTED_BORDER
+		width = 5
+	if _focused:
+		border = border.lerp(FOCUS_BORDER, 0.6) if selected else FOCUS_BORDER
+		width += 2
+	_frame_style.border_color = border
+	_frame_style.set_border_width_all(width)
 	modulate = Color.WHITE if (_playable or selected) else Color(0.55, 0.55, 0.6)

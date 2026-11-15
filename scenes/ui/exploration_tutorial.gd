@@ -36,9 +36,10 @@ func _ready() -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	lines.add_child(title)
 
-	_move_label = _add_line(lines, "Move:  A / D  or  Left / Right")
-	_jump_label = _add_line(lines, "Jump:  W / Space / Up  (hold to jump higher)")
-	_dash_label = _add_line(lines, "Dash:  Shift / K  (works in the air too)")
+	# Key names follow the player's bindings from Options.
+	_move_label = _add_line(lines, "Move:  %s (left),  %s (right)" % [Settings.describe("Move left"), Settings.describe("Move right")])
+	_jump_label = _add_line(lines, "Jump:  %s  (hold to jump higher)" % Settings.describe("Move up"))
+	_dash_label = _add_line(lines, "Dash:  %s  (works in the air too)" % Settings.describe("Dash"))
 	_add_line(lines, "Wall jump:  jump while sliding down a wall")
 	_add_line(lines, "Pause:  Esc")
 	_add_line(lines, "Touch a monster to start a battle")
