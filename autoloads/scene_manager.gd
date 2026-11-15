@@ -73,6 +73,10 @@ func clear_game() -> void:
 
 func _free_battle_scene() -> void:
 	if is_instance_valid(_battle_scene):
+		# Leave the tree right away so its camera stops being current before
+		# the room's camera comes back.
+		if _battle_scene.get_parent():
+			_battle_scene.get_parent().remove_child(_battle_scene)
 		_battle_scene.queue_free()
 	_battle_scene = null
 

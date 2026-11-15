@@ -221,7 +221,7 @@ position = Vector2(-185, 87)
 script = ExtResource("1_n1788")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Level001/Player 1" unique_id=558014285]
-position = Vector2(-234, 19)
+position = Vector2(2.5, -29.5)
 sprite_frames = SubResource("SpriteFrames_4c57u")
 animation = &"run"
 autoplay = "Idle"
@@ -229,7 +229,7 @@ frame = 5
 frame_progress = 1.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Level001/Player 1" unique_id=1995074830]
-position = Vector2(-236.5, 48.5)
+position = Vector2(0, 0)
 shape = SubResource("RectangleShape2D_ugnsh")
 
 [node name="Camera2D" type="Camera2D" parent="Level001" unique_id=1932142666]

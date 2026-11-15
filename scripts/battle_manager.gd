@@ -36,6 +36,12 @@ func set_enemies(enemies: PackedStringArray) -> void:
 
 # 2. Initialization is handled once in the tree
 func _ready() -> void:
+	# Exploration now uses a scrolling camera; give the battle its own fixed one.
+	var camera := Camera2D.new()
+	camera.anchor_mode = Camera2D.ANCHOR_MODE_FIXED_TOP_LEFT
+	add_child(camera)
+	camera.make_current()
+
 	setup_deck()
 	player.setup(RunManager.hp, RunManager.max_hp)
 	_create_status_labels()
@@ -77,7 +83,7 @@ func _spawn_enemies() -> void:
 
 ## Enemies get tougher deeper into the run; the boss gets its own boost.
 func _apply_run_modifiers() -> void:
-	var hp_scale := RunManager.enemy_hp_scale()
+	var hp_scale: float = RunManager.enemy_hp_scale()
 	if RunManager.is_boss_room():
 		enemy.apply_modifiers(hp_scale * RunManager.BOSS_HP_MULTIPLIER,
 			RunManager.BOSS_DAMAGE_BONUS, RunManager.BOSS_NAME)
@@ -224,7 +230,7 @@ func _end_battle(won: bool) -> void:
 	execute_button.hide()
 	RunManager.hp = player.hp # Damage carries over to the next fight.
 
-	var boss := RunManager.is_boss_room()
+	var boss: bool = RunManager.is_boss_room()
 	var text := "YOU DIED"
 	if won:
 		text = "RUN COMPLETE!" if boss else "VICTORY"

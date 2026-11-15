@@ -71,7 +71,7 @@ func reach_exit() -> void:
 	if state != GameState.PLAYING:
 		return
 	_set_player_frozen(true)
-	var next_room := await UiManager.choose_path(RunManager.get_next_room_choices())
+	var next_room: Dictionary = await UiManager.choose_path(RunManager.get_next_room_choices())
 	RunManager.advance_to(next_room)
 	await SceneManager.start_room()
 
