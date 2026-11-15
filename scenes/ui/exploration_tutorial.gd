@@ -1,10 +1,7 @@
 extends CanvasLayer
-## Controls hint shown in exploration until the player has moved and jumped once.
-## Completion is saved, so it only appears on a first playthrough.
-## To see it again, delete user://progress.cfg
-## (Project > Open User Data Folder in the editor).
+## Controls hint shown in the first room of every run. Each line turns green once
+## the player tries it; after move, jump and dash are all done it fades out.
 
-const SAVE_PATH := "user://progress.cfg"
 const DONE_COLOR := Color(0.55, 1.0, 0.55)
 const FADE_DELAY := 2.5
 const FADE_TIME := 0.6
@@ -17,12 +14,6 @@ var _moved := false
 var _jumped := false
 var _dashed := false
 var _finishing := false
-
-static func should_show() -> bool:
-	var cfg := ConfigFile.new()
-	if cfg.load(SAVE_PATH) != OK:
-		return true
-	return not cfg.get_value("tutorial", "exploration_done_v2", false)
 
 func _ready() -> void:
 	# Default layer: menus in Main's OverlayContainer come later in the tree, so they draw on top.
@@ -51,6 +42,7 @@ func _ready() -> void:
 	_add_line(lines, "Wall jump:  jump while sliding down a wall")
 	_add_line(lines, "Pause:  Esc")
 	_add_line(lines, "Touch a monster to start a battle")
+	_add_line(lines, "Defeat every monster to unlock the exit")
 
 func _add_line(parent: Control, text: String) -> Label:
 	var label := Label.new()
@@ -78,15 +70,8 @@ func _mark_done(label: Label) -> void:
 
 func _finish() -> void:
 	_finishing = true
-	_save_done()
 	await get_tree().create_timer(FADE_DELAY).timeout
 	var tween := create_tween()
 	tween.tween_property(_panel, "modulate:a", 0.0, FADE_TIME)
 	await tween.finished
 	queue_free()
-
-func _save_done() -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SAVE_PATH) # Keep any other saved values; fine if the file doesn't exist yet.
-	cfg.set_value("tutorial", "exploration_done_v2", true)
-	cfg.save(SAVE_PATH)
