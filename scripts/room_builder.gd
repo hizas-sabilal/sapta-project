@@ -22,6 +22,14 @@ const MAX_MONSTERS := 3
 ## Spike damage: base, plus up to this much more at full difficulty.
 const SPIKE_DAMAGE := 3
 const SPIKE_EXTRA_DAMAGE := 3
+## Coins in a room that has them (see Progress.coin_room_chance()).
+const COINS_MIN := 1
+const COINS_MAX := 3
+const COIN_GROUND_HEIGHT := 40.0 ## Walking through picks it up.
+## Over spikes: a jump that clears a 1-block strip is near its peak there,
+## with Iris's body ~162-195px up for every clean takeoff, so a full jump
+## over the spikes always grabs it (a short hop doesn't).
+const COIN_SPIKE_HEIGHT := 175.0
 ## Max blocks a monster walks either side of where it spawned.
 const PATROL_REACH := 3
 
@@ -74,6 +82,9 @@ static func build(level: Node, room: Dictionary) -> void:
 	elif type == types.TREASURE:
 		_place(world, CHEST.new(), layout.ground_point(layout.content_x))
 
+	if not is_boss:
+		_place_coins(world, layout, rng)
+
 	if layout.exit_x >= 0: # The boss arena has no exit; beating the boss ends the run.
 		var exit = EXIT.new()
 		exit.trigger_size = Vector2(56, 110)
@@ -87,8 +98,38 @@ static func _monster_count(rng: RandomNumberGenerator, difficulty: float) -> int
 	var hi := MAX_MONSTERS + (1 if difficulty >= 0.3 else 0)
 	return rng.randi_range(lo, hi)
 
+## Some rooms (Progress.coin_room_chance()) have a few coins: floating over
+## open ground, and over spike traps so jumping them pays off.
+static func _place_coins(world: Node2D, layout: RoomGenerator.Layout,
+		rng: RandomNumberGenerator) -> void:
+	if rng.randf() >= Progress.coin_room_chance():
+		return
+	var spots: Array[Vector2] = []
+	for strip in layout.spikes:
+		var center_x: float = (strip.x + strip.w / 2.0) * RoomGenerator.BLOCK
+		var is_pit: bool = layout.surface[strip.x - 1] < strip.top
+		var ledge_y: float = (strip.top - (2 if is_pit else 0)) * RoomGenerator.BLOCK
+		spots.append(Vector2(center_x, ledge_y - (50.0 if is_pit else COIN_SPIKE_HEIGHT)))
+	for col in layout.flat_spots:
+		# Leave the chest / campfire spot alone, and nothing at or past the exit
+		# door: touching the door leaves the room, so those could never be reached.
+		if absi(col - layout.content_x) > 1 and col < layout.exit_x - 1:
+			spots.append(layout.ground_point(col) - Vector2(0, COIN_GROUND_HEIGHT))
+	# Shuffle with the room's rng so a run seed always gives the same coins.
+	for i in range(spots.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp := spots[i]
+		spots[i] = spots[j]
+		spots[j] = tmp
+	var count := mini(rng.randi_range(COINS_MIN, COINS_MAX), spots.size())
+	for i in count:
+		var coin := Coin.new()
+		coin.position = spots[i]
+		world.add_child(coin)
+
 static func _place_spikes(world: Node2D, layout: RoomGenerator.Layout) -> void:
 	var damage := SPIKE_DAMAGE + roundi(SPIKE_EXTRA_DAMAGE * layout.difficulty)
+	damage = maxi(damage - Progress.bonus("thick_soles"), 1) # Skill tree.
 	for strip in layout.spikes:
 		var spikes := Spikes.new()
 		spikes.width = strip.w * RoomGenerator.BLOCK

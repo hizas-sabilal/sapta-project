@@ -34,9 +34,8 @@ func _ready() -> void:
 	box.add_child(row)
 
 	for room in options:
-		var info: Dictionary = RunManager.ROOM_INFO[room.type]
 		var button := Button.new()
-		button.text = "%s\n\n%s" % [RunManager.describe_room(room), info.desc]
+		button.text = "%s\n\n%s" % [RunManager.describe_room(room), RunManager.room_desc(room)]
 		button.custom_minimum_size = Vector2(280, 160)
 		button.add_theme_font_size_override("font_size", 20)
 		button.pressed.connect(_choose.bind(room))

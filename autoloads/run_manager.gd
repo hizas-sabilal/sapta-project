@@ -41,7 +41,7 @@ enum RoomType { FIGHT, TREASURE, REST, BOSS }
 const ROOM_INFO := {
 	RoomType.FIGHT: {"name": "Fight", "desc": "Battle a monster.\nWin to earn a card."},
 	RoomType.TREASURE: {"name": "Treasure", "desc": "Open a chest and\npick a card."},
-	RoomType.REST: {"name": "Campfire", "desc": "Rest to recover\n30% of your max HP."},
+	RoomType.REST: {"name": "Campfire", "desc": "Rest to recover\n%d%% of your max HP."}, # Filled in by room_desc().
 	RoomType.BOSS: {"name": "Boss", "desc": "The Vampire Lord awaits."},
 }
 
@@ -78,7 +78,8 @@ var room_index := 0
 var current_room: Dictionary = {}
 
 func start_new_run() -> void:
-	max_hp = PLAYER_STATS.max_health
+	# Skill tree: Will to Live + Toughness.
+	max_hp = PLAYER_STATS.max_health + Progress.bonus("will") + Progress.bonus("toughness")
 	hp = max_hp
 	deck = STARTING_DECK.duplicate()
 	battles_won = 0
@@ -98,7 +99,7 @@ func add_card(card: CardData) -> void:
 func get_reward_choices() -> Array[CardData]:
 	var pool := CARD_POOL.duplicate()
 	pool.shuffle()
-	return pool.slice(0, REWARD_CHOICES)
+	return pool.slice(0, REWARD_CHOICES + Progress.bonus("keen_eye"))
 
 func is_boss_room() -> bool:
 	return current_room.get("type") == RoomType.BOSS
@@ -127,7 +128,7 @@ func advance_to(room: Dictionary) -> void:
 ## Heals a fraction of max HP; returns the amount actually healed.
 func rest() -> int:
 	var before := hp
-	hp = min(hp + ceili(max_hp * REST_HEAL_FRACTION), max_hp)
+	hp = min(hp + ceili(max_hp * rest_heal_fraction()), max_hp)
 	return hp - before
 
 ## How hard the current room's layout is: 0 in the first room, 1 in the last
@@ -135,8 +136,19 @@ func rest() -> int:
 func difficulty() -> float:
 	return clampf(room_index / float(ROOMS_PER_RUN - 2), 0.0, 1.0)
 
+## Campfire heal, including the Camper skill.
+func rest_heal_fraction() -> float:
+	return REST_HEAL_FRACTION + Progress.bonus("camper") / 100.0
+
 func enemy_hp_scale() -> float:
 	return 1.0 + ENEMY_HP_SCALE_PER_ROOM * room_index
+
+## Room description for the path choice, with live numbers filled in.
+func room_desc(room: Dictionary) -> String:
+	var desc: String = ROOM_INFO[room.type].desc
+	if room.type == RoomType.REST:
+		desc = desc % roundi(rest_heal_fraction() * 100.0)
+	return desc
 
 func describe_room(room: Dictionary) -> String:
 	var info: Dictionary = ROOM_INFO[room.type]

@@ -19,6 +19,8 @@ var discard_pile = []
 
 const MAX_CARD_IN_HAND = 3
 const ACTION_POINT = 3
+## AP per turn, including the Adrenaline skill.
+var max_ap := ACTION_POINT + Progress.bonus("adrenaline")
 const RESULT_SCREEN_SECONDS = 2.0
 var used_AP := 0
 
@@ -167,7 +169,7 @@ func _small_label(text: String) -> Label:
 func _process(_delta: float) -> void:
 	if player_hp_bar:
 		player_hp_bar.set_values(player.hp, player.max_hp, player.block)
-		ap_dots.set_values(ACTION_POINT - used_AP, ACTION_POINT)
+		ap_dots.set_values(max_ap - used_AP, max_ap)
 	if enemy_hp_bar and enemy:
 		enemy_name_label.text = enemy.enemy_name
 		enemy_hp_bar.set_values(enemy.current_hp, enemy.max_hp)
@@ -270,8 +272,8 @@ func draw_hand():
 ## Dims cards that don't fit in the AP left this turn.
 func _refresh_playable() -> void:
 	for card in hand:
-		card.set_playable(not busy and used_AP + card.data.cost <= ACTION_POINT)
-	execute_button.set_state(selected_cards.size(), used_AP, ACTION_POINT)
+		card.set_playable(not busy and used_AP + card.data.cost <= max_ap)
+	execute_button.set_state(selected_cards.size(), used_AP, max_ap)
 
 func _set_busy(value: bool) -> void:
 	busy = value
@@ -282,6 +284,8 @@ func _set_busy(value: bool) -> void:
 func start_player_turn():
 	used_AP = 0
 	player.reset_block() # Block only lasts through the enemy's next attack.
+	if Progress.bonus("guard") > 0: # Skill tree.
+		player.add_block(Progress.bonus("guard"))
 	enemy.roll_intent()
 	draw_hand()
 	_set_busy(false)
@@ -296,7 +300,7 @@ func select_card(card):
 		selected_cards.erase(card)
 		card.set_selected(false)
 		used_AP -= card.data.cost
-	elif used_AP + card.data.cost <= ACTION_POINT:
+	elif used_AP + card.data.cost <= max_ap:
 		used_AP += card.data.cost
 		selected_cards.append(card)
 		card.set_selected(true)
@@ -341,7 +345,7 @@ func _play_card(data: CardData) -> void:
 
 	if data.damage > 0:
 		for i in data.hits:
-			var dealt: int = enemy.take_hit(data.damage)
+			var dealt: int = enemy.take_hit(data.damage + Progress.bonus("sharpness"))
 			_popup_at(enemy, "-%d" % dealt, Color(1, 0.35, 0.3))
 			if data.lifesteal > 0:
 				var restored: int = player.heal(int(dealt * data.lifesteal / 100.0))

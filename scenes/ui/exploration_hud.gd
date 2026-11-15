@@ -16,7 +16,7 @@ func _ready() -> void:
 	add_child(_label)
 
 func _process(_delta: float) -> void:
-	_label.text = "Room %d / %d  -  %s\nHP %d / %d\nDeck: %d cards" % [
+	_label.text = "Room %d / %d  -  %s\nHP %d / %d\nDeck: %d cards\nCoins: %d" % [
 		RunManager.room_index + 1, RunManager.ROOMS_PER_RUN,
 		RunManager.describe_room(RunManager.current_room),
-		RunManager.hp, RunManager.max_hp, RunManager.deck.size()]
+		RunManager.hp, RunManager.max_hp, RunManager.deck.size(), Progress.coins]
