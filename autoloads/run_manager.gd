@@ -12,13 +12,24 @@ const STARTING_DECK: Array[CardData] = [
 	preload("res://resources/cardsdata/double_stab.tres"),
 ]
 
-## Cards that can be offered as battle / treasure rewards.
+## Cards that can be offered as battle / treasure rewards (every card in the game).
 const CARD_POOL: Array[CardData] = [
-	preload("res://resources/cardsdata/bandage.tres"),
-	preload("res://resources/cardsdata/block.tres"),
 	preload("res://resources/cardsdata/slash.tres"),
 	preload("res://resources/cardsdata/stab.tres"),
 	preload("res://resources/cardsdata/double_stab.tres"),
+	preload("res://resources/cardsdata/heavy_strike.tres"),
+	preload("res://resources/cardsdata/flurry.tres"),
+	preload("res://resources/cardsdata/serrated_edge.tres"),
+	preload("res://resources/cardsdata/block.tres"),
+	preload("res://resources/cardsdata/shield_bash.tres"),
+	preload("res://resources/cardsdata/iron_wall.tres"),
+	preload("res://resources/cardsdata/parry.tres"),
+	preload("res://resources/cardsdata/bandage.tres"),
+	preload("res://resources/cardsdata/second_wind.tres"),
+	preload("res://resources/cardsdata/blood_drain.tres"),
+	preload("res://resources/cardsdata/hemorrhage.tres"),
+	preload("res://resources/cardsdata/intimidate.tres"),
+	preload("res://resources/cardsdata/expose.tres"),
 ]
 
 const REWARD_CHOICES := 3

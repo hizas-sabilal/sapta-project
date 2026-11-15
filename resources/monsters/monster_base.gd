@@ -21,9 +21,45 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	pass
 
+## Status effects from cards (see CardData for what each does).
+var bleed := 0
+var weaken := 0
+var expose := 0
+## Damage rolled for the enemy's next attack, shown to the player as its intent.
+var intent_damage := 0
+
+const EXPOSE_MULTIPLIER := 1.5
+
 func take_damage(amount: int):
 	current_hp = max(current_hp - amount, 0)
 	print(enemy_name, " HP : ", current_hp)
+
+## A hit from a card: boosted while exposed. Returns the damage actually dealt.
+func take_hit(amount: int) -> int:
+	var dealt := int(amount * EXPOSE_MULTIPLIER) if expose > 0 else amount
+	dealt = mini(dealt, current_hp) # Lifesteal can't heal off overkill.
+	take_damage(dealt)
+	return dealt
+
+## Start of the enemy's turn: bleed deals its stacks as damage, then fades by 1.
+func tick_bleed() -> int:
+	if bleed <= 0:
+		return 0
+	var dealt := mini(bleed, current_hp)
+	take_damage(dealt)
+	bleed -= 1
+	return dealt
+
+## End of the player's turn: exposed lasts a set number of player turns.
+func tick_expose() -> void:
+	expose = maxi(expose - 1, 0)
+
+func roll_intent() -> void:
+	intent_damage = randi_range(min_damage, max_damage)
+
+## What the next attack will deal after weaken.
+func planned_damage() -> int:
+	return maxi(intent_damage - weaken, 0)
 
 ## Called by the battle after spawning, to scale enemies deeper into a run.
 func apply_modifiers(hp_scale: float, damage_bonus: int = 0, name_override: String = "") -> void:
@@ -53,5 +89,8 @@ func play_attack():
 	await anim.animation_finished
 	anim.play(Constants.ANIM_IDLE)
 
+## Performs the planned attack; weaken is used up by it.
 func attack() -> int:
-	return randi_range(min_damage, max_damage)
+	var damage := planned_damage()
+	weaken = 0
+	return damage

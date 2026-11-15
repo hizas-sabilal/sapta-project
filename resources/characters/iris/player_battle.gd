@@ -25,12 +25,14 @@ func play_hurt():
 	await anim.animation_finished
 	anim.play("idle")
 
-## Block absorbs damage first, then the rest hits HP.
-func take_damage(damage: int):
+## Block absorbs damage first, then the rest hits HP. Returns the HP lost.
+func take_damage(damage: int) -> int:
 	var absorbed: int = min(block, damage)
 	block -= absorbed
-	hp = max(hp - (damage - absorbed), 0)
+	var lost: int = min(damage - absorbed, hp)
+	hp -= lost
 	print("PLAYER took ", damage, " (blocked ", absorbed, ") -> HP ", hp)
+	return lost
 
 func add_block(amount: int):
 	block += amount
@@ -39,9 +41,12 @@ func add_block(amount: int):
 func reset_block():
 	block = 0
 
-func heal(amount: int):
-	hp = min(hp + amount, max_hp)
-	print("PLAYER HEALED FOR:", amount, " -> HP ", hp)
+## Returns the HP actually restored (capped at max HP).
+func heal(amount: int) -> int:
+	var restored: int = min(amount, max_hp - hp)
+	hp += restored
+	print("PLAYER HEALED FOR:", restored, " -> HP ", hp)
+	return restored
 
 func is_dead() -> bool:
 	return hp <= 0

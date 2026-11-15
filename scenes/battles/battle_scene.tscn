@@ -46,9 +46,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -75.0
-offset_top = 265.0
+offset_top = 300.0
 offset_right = 75.0
-offset_bottom = 310.0
+offset_bottom = 345.0
 grow_horizontal = 2
 text = "Action!"
 
