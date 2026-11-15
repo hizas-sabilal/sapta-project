@@ -60,6 +60,27 @@ func show_message(text: String, seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 	label.queue_free()
 
+## Short gold notice near the top of the screen that fades out on its own.
+func show_toast(text: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	label.offset_left = -300
+	label.offset_right = 300
+	label.offset_top = 90
+	label.add_theme_font_size_override("font_size", 30)
+	label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	label.add_theme_constant_override("outline_size", 8)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The overlay layer stays up across scene changes (path choice, main menu).
+	_overlay_container.add_child(label)
+	var tween := label.create_tween()
+	tween.tween_interval(1.6)
+	tween.tween_property(label, "modulate:a", 0.0, 0.5)
+	tween.tween_callback(label.queue_free)
+
 func hide_pause_menu() -> void:
 	if not _pause_menu:
 		return

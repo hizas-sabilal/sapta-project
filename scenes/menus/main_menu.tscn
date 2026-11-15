@@ -34,6 +34,11 @@ custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "Start"
 
+[node name="SkillsButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=1203457719]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "Skills"
+
 [node name="OptionsButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=1967221872]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
@@ -45,5 +50,6 @@ layout_mode = 2
 text = "Exit"
 
 [connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/SkillsButton" to="." method="_on_skills_button_pressed"]
 [connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
 [connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/ExitButton" to="." method="_on_exit_button_pressed"]

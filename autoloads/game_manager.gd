@@ -59,6 +59,14 @@ func end_battle(won: bool) -> void:
 	else:
 		# Lost, or beat the boss: the run is over either way.
 		end_run()
+		if won:
+			_reward_room_clear() # Beating the boss clears the last room (toast over the menu).
+
+## Every cleared room pays coins into the permanent bank.
+func _reward_room_clear() -> void:
+	var reward := Progress.room_clear_reward()
+	Progress.add_coins(reward)
+	UiManager.show_toast("Room cleared!  +%d coins" % reward)
 
 ## Iris ran out of HP outside a battle (traps). Same outcome as losing a fight.
 func player_killed() -> void:
@@ -80,6 +88,7 @@ func reach_exit() -> void:
 	if state != GameState.PLAYING:
 		return
 	_set_player_frozen(true)
+	_reward_room_clear()
 	var next_room: Dictionary = await UiManager.choose_path(RunManager.get_next_room_choices())
 	RunManager.advance_to(next_room)
 	await SceneManager.start_room()

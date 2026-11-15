@@ -1,5 +1,5 @@
 extends RoomProp
-## Rest spot: heals once (RunManager.REST_HEAL_FRACTION of max HP).
+## Rest spot: heals once (RunManager.rest_heal_fraction() of max HP).
 
 var _flame: Polygon2D
 var _used := false
