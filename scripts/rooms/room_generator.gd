@@ -200,6 +200,51 @@ static func _pick_content_column(layout: Layout, rng: RandomNumberGenerator) -> 
 		return layout.width - 6 # Inside the end pad.
 	return candidates[rng.randi_range(0, candidates.size() - 1)]
 
+## Up to `count` distinct flat columns for patrolling monsters, spread through the
+## room (away from the spawn and the exit) and at least MONSTER_SPACING apart.
+## Falls back to content_x so a fight room always has at least one monster.
+const MONSTER_SPACING := 7
+
+static func pick_monster_columns(layout: Layout, rng: RandomNumberGenerator, count: int) -> Array[int]:
+	var lo := layout.spawn_x + 6
+	var hi := (layout.exit_x - 3) if layout.exit_x >= 0 else layout.width - 3
+	var candidates := layout.flat_spots.filter(func(c): return c >= lo and c <= hi)
+	# Shuffle with the room's rng so a run seed always gives the same placement.
+	for i in range(candidates.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp = candidates[i]
+		candidates[i] = candidates[j]
+		candidates[j] = tmp
+	var picked: Array[int] = []
+	for c in candidates:
+		if picked.size() >= count:
+			break
+		if picked.all(func(p): return absi(p - c) >= MONSTER_SPACING):
+			picked.append(c)
+	if picked.is_empty():
+		picked.append(layout.content_x)
+	picked.sort()
+	return picked
+
+## How far a monster at column x can patrol: the run of columns at the same ground
+## height with nothing in the 2 blocks above it, capped at `max_reach` each side
+## and kept clear of the spawn and the exit. Returns Vector2i(first_col, last_col).
+static func patrol_span(layout: Layout, x: int, max_reach: int) -> Vector2i:
+	var lo_limit := layout.spawn_x + 3
+	var hi_limit := (layout.exit_x - 2) if layout.exit_x >= 0 else layout.width - 2
+	var first := x
+	while first - 1 >= lo_limit and x - (first - 1) <= max_reach and _walkable(layout, first - 1, layout.surface[x]):
+		first -= 1
+	var last := x
+	while last + 1 <= hi_limit and (last + 1) - x <= max_reach and _walkable(layout, last + 1, layout.surface[x]):
+		last += 1
+	return Vector2i(first, last)
+
+static func _walkable(layout: Layout, col: int, top: int) -> bool:
+	if col <= 0 or col >= layout.width - 1 or layout.surface[col] != top:
+		return false
+	return not layout.blocks.has(Vector2i(col, top - 1)) and not layout.blocks.has(Vector2i(col, top - 2))
+
 ## Fills ground below the surface and adds the stone border.
 static func _finalize(layout: Layout) -> void:
 	for col in layout.width:

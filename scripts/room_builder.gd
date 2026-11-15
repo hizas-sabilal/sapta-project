@@ -15,6 +15,11 @@ const MONSTER_HALF_HEIGHT := 64.0
 const BOSS_SCALE := 1.5
 const BOSS_TINT := Color(1.0, 0.55, 0.55)
 const BACKGROUND_SCALE := 0.75
+## Fight rooms spawn this many patrolling monsters (fewer if the room is too cramped).
+const MIN_MONSTERS := 2
+const MAX_MONSTERS := 4
+## Max blocks a monster walks either side of where it spawned.
+const PATROL_REACH := 3
 
 static func build(level: Node, room: Dictionary) -> void:
 	var world: Node2D = level.get_node("Level001")
@@ -38,16 +43,23 @@ static func build(level: Node, room: Dictionary) -> void:
 	_setup_background(world)
 
 	var monster: Node2D = world.get_node("Monsta")
-	if type == types.FIGHT or is_boss:
-		monster.set_meta("Enemies", room.enemy)
-		monster.add_to_group("room_guard") # Locks the exit until defeated.
-		var monster_scale := BOSS_SCALE if is_boss else 1.0
-		monster.scale = Vector2.ONE * monster_scale
-		if is_boss:
-			monster.modulate = BOSS_TINT
-		# Feet on the ground (this also fixes the boss sinking into the floor).
-		monster.position = layout.ground_point(layout.content_x) \
-			- Vector2(0, MONSTER_HALF_HEIGHT * monster_scale + 1)
+	if is_boss:
+		_setup_monster(monster, room.enemy, layout, layout.content_x, BOSS_SCALE)
+		monster.modulate = BOSS_TINT # The boss stands its ground: no patrol.
+	elif type == types.FIGHT:
+		var count := rng.randi_range(MIN_MONSTERS, MAX_MONSTERS)
+		var columns := RoomGenerator.pick_monster_columns(layout, rng, count)
+		# Copy the template before any patrol is attached, so copies don't inherit one.
+		var monsters: Array[Node2D] = [monster]
+		for i in range(1, columns.size()):
+			var copy := monster.duplicate() as Node2D
+			copy.name = "Monsta%d" % (i + 1)
+			world.add_child(copy)
+			monsters.append(copy)
+		for i in columns.size():
+			var m := monsters[i]
+			_setup_monster(m, room.enemy, layout, columns[i], 1.0)
+			_add_patrol(m, layout, columns[i], rng)
 	else:
 		world.remove_child(monster)
 		monster.queue_free()
@@ -63,6 +75,26 @@ static func build(level: Node, room: Dictionary) -> void:
 		_place(world, exit, layout.ground_point(layout.exit_x))
 
 	level.add_child(HUD.new())
+
+static func _setup_monster(monster: Node2D, enemy: String, layout: RoomGenerator.Layout,
+		column: int, monster_scale: float) -> void:
+	monster.set_meta("Enemies", enemy)
+	monster.add_to_group("room_guard") # Locks the exit until every guard is defeated.
+	monster.scale = Vector2.ONE * monster_scale
+	# Feet on the ground (this also fixes the boss sinking into the floor).
+	monster.position = layout.ground_point(column) \
+		- Vector2(0, MONSTER_HALF_HEIGHT * monster_scale + 1)
+
+static func _add_patrol(monster: Node2D, layout: RoomGenerator.Layout, column: int,
+		rng: RandomNumberGenerator) -> void:
+	var span := RoomGenerator.patrol_span(layout, column, PATROL_REACH)
+	var patrol := MonsterPatrol.new()
+	patrol.speed = rng.randf_range(35.0, 60.0)
+	# Walk between the centers of the first and last flat columns, so the monster
+	# never hangs over a ledge or clips into a step.
+	patrol.setup(layout.ground_point(span.x).x, layout.ground_point(span.y).x,
+		-1.0 if rng.randf() < 0.5 else 1.0)
+	monster.add_child(patrol)
 
 static func _place_player(world: Node2D, layout: RoomGenerator.Layout) -> void:
 	var player: CharacterBody2D = world.get_node("Player 1")
