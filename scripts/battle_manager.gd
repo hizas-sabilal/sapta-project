@@ -179,9 +179,13 @@ func _process(_delta: float) -> void:
 func _intent_text() -> String:
 	if battle_over or enemy.is_dead():
 		return ""
+	var text := "Intent: Attack %d" % enemy.intent_damage
 	if enemy.weaken > 0:
-		return "Intent: Attack %d  (-%d = %d)" % [enemy.intent_damage, enemy.weaken, enemy.planned_damage()]
-	return "Intent: Attack %d" % enemy.intent_damage
+		text += "  (-%d = %d)" % [enemy.weaken, enemy.planned_damage()]
+	if enemy.enrage_bonus > 0:
+		text += "
+Enraged +%d" % enemy.enrage_bonus
+	return text
 
 func _enemy_status_text() -> String:
 	var parts: PackedStringArray = []

@@ -9,4 +9,5 @@ type = 1
 cost = 2
 block = 13
 description = "Nothing gets through."
+unlock_cost = 40
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

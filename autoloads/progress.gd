@@ -1,10 +1,13 @@
 extends Node
-## Progress that survives between runs: coins and the skill tree.
+## Progress that survives between runs: coins, the skill tree, unlocked cards
+## and the starting deck.
 ## Coins are kept even when a run ends in death; spend them in the main
 ## menu's Skills screen. Saved to user://meta_progress.cfg after every change.
 
 signal coins_changed(coins: int)
 signal skills_changed
+## Unlocked cards or the starting deck changed.
+signal cards_changed
 
 const SAVE_PATH := "user://meta_progress.cfg"
 
@@ -54,6 +57,8 @@ const SKILLS := [
 
 var coins := 0
 var _levels := {} ## skill id -> level
+var _unlocked_cards: Array[String] = [] ## ids of cards unlocked by buying or finding them
+var _starting_deck: Array[String] = [] ## card ids; empty = CardLibrary.DEFAULT_DECK
 
 func _ready() -> void:
 	_load()
@@ -139,12 +144,76 @@ func describe(id: String) -> String:
 	var s := skill(id)
 	return s.desc % s.per_level
 
+# ---------------------------------------------------------------- Cards
+
+func is_card_unlocked(card: CardData) -> bool:
+	return card.unlock_cost <= 0 or _unlocked_cards.has(card.id())
+
+func unlocked_cards() -> Array[CardData]:
+	return _cards_where(true)
+
+func locked_cards() -> Array[CardData]:
+	return _cards_where(false)
+
+func _cards_where(unlocked: bool) -> Array[CardData]:
+	var out: Array[CardData] = []
+	for card in CardLibrary.ALL:
+		if is_card_unlocked(card) == unlocked:
+			out.append(card)
+	return out
+
+## Unlocks a card for good (found in a run, or bought). False if it already was.
+func unlock_card(card: CardData) -> bool:
+	if is_card_unlocked(card):
+		return false
+	_unlocked_cards.append(card.id())
+	_save()
+	cards_changed.emit()
+	return true
+
+func can_buy_card(card: CardData) -> bool:
+	return not is_card_unlocked(card) and coins >= card.unlock_cost
+
+func buy_card(card: CardData) -> bool:
+	if not can_buy_card(card):
+		return false
+	coins -= card.unlock_cost
+	unlock_card(card) # Saves.
+	coins_changed.emit(coins)
+	return true
+
+## The deck a run starts with. Falls back to the default deck if the saved one
+## no longer works (a card was removed from the game, or rules changed).
+func starting_deck() -> Array[CardData]:
+	var deck: Array[CardData] = []
+	for id in _starting_deck:
+		var card := CardLibrary.by_id(id)
+		if card == null or not is_card_unlocked(card):
+			return CardLibrary.DEFAULT_DECK.duplicate()
+		deck.append(card)
+	if deck.is_empty() or CardLibrary.deck_problem(deck) != "":
+		return CardLibrary.DEFAULT_DECK.duplicate()
+	return deck
+
+## Saves a starting deck. Only valid decks are accepted.
+func set_starting_deck(deck: Array) -> bool:
+	if CardLibrary.deck_problem(deck) != "":
+		return false
+	_starting_deck.clear()
+	for card in deck:
+		_starting_deck.append(card.id())
+	_save()
+	cards_changed.emit()
+	return true
+
 # ---------------------------------------------------------------- Save
 
 func _save() -> void:
 	var config := ConfigFile.new()
 	config.set_value("meta", "coins", coins)
 	config.set_value("meta", "skills", _levels)
+	config.set_value("cards", "unlocked", _unlocked_cards)
+	config.set_value("cards", "starting_deck", _starting_deck)
 	var err := config.save(SAVE_PATH)
 	if err != OK:
 		push_warning("Could not save progress: %s" % error_string(err))
@@ -159,3 +228,8 @@ func _load() -> void:
 		for id in saved:
 			if not skill(id).is_empty(): # Skip skills that no longer exist.
 				_levels[id] = clampi(int(saved[id]), 0, skill(id).max)
+	for id in config.get_value("cards", "unlocked", []):
+		if CardLibrary.by_id(str(id)) != null: # Skip cards that no longer exist.
+			_unlocked_cards.append(str(id))
+	for id in config.get_value("cards", "starting_deck", []):
+		_starting_deck.append(str(id))

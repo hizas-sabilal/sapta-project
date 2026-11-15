@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Bulwark Slam"
+type = 1
+cost = 2
+damage = 8
+block = 8
+rarity = 1
+unlock_cost = 80
+description = "Hit them with the whole wall."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

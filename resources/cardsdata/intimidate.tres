@@ -7,6 +7,6 @@ script = ExtResource("1_card")
 card_name = "Intimidate"
 type = 3
 cost = 1
-weaken = 4
+weaken = 6
 description = "Make them hesitate."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

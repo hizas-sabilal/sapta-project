@@ -10,4 +10,5 @@ cost = 2
 damage = 6
 lifesteal = 100
 description = "Take back what they took from you."
+unlock_cost = 50
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

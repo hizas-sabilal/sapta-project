@@ -5,6 +5,7 @@ extends Control
 @onready var _options_button: Button = $Panel/CenterContainer/VBoxContainer/OptionsButton
 
 var _coins_label: Label
+var _deck_button: Button
 
 func _ready() -> void:
 	# Coin balance under the buttons (coins are kept between runs).
@@ -17,6 +18,14 @@ func _ready() -> void:
 	$Panel/CenterContainer/VBoxContainer.add_child(_coins_label)
 	Progress.coins_changed.connect(_update_coins)
 	_update_coins(Progress.coins)
+
+	# Deck builder, right under Start.
+	_deck_button = Button.new()
+	_deck_button.text = "Deck"
+	_deck_button.custom_minimum_size = _start_button.custom_minimum_size
+	_deck_button.pressed.connect(func(): _open_screen(DeckMenu.new(), _deck_button))
+	$Panel/CenterContainer/VBoxContainer.add_child(_deck_button)
+	$Panel/CenterContainer/VBoxContainer.move_child(_deck_button, _start_button.get_index() + 1)
 
 	_start_button.grab_focus() # Lets the menu be driven with arrow keys + Enter.
 

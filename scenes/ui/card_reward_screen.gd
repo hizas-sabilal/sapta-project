@@ -8,6 +8,8 @@ signal finished(card: CardData)
 const CARD_SCENE := preload("res://scenes/battles/card_ui.tscn")
 
 var title_text := "Choose a card to add to your deck"
+## Chance one offered card is a locked one (badged NEW!; picking unlocks it).
+var discovery_chance := CardLibrary.BATTLE_DISCOVERY_CHANCE
 var _done := false
 var _cards: Array = []
 var _skip: Button
@@ -42,12 +44,14 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 24)
-	for card_data in RunManager.get_reward_choices():
+	for card_data in RunManager.get_reward_choices(discovery_chance):
 		var card_ui = CARD_SCENE.instantiate()
 		card_ui.data = card_data
 		card_ui.clicked.connect(_pick)
 		row.add_child(card_ui)
 		_cards.append(card_ui)
+		if not Progress.is_card_unlocked(card_data):
+			card_ui.add_child(_new_badge())
 	box.add_child(row)
 
 	_skip = Button.new()
@@ -147,6 +151,19 @@ func _update_cursor() -> void:
 	else:
 		_skip.remove_theme_stylebox_override("normal")
 
+## Gold "NEW!" tag over a locked card's top-right corner.
+func _new_badge() -> Label:
+	var badge := Label.new()
+	badge.text = "NEW!"
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_theme_font_size_override("font_size", 18)
+	badge.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	badge.add_theme_constant_override("outline_size", 6)
+	badge.add_theme_color_override("font_outline_color", Color.BLACK)
+	badge.position = Vector2(112, 0)
+	badge.rotation_degrees = 12
+	return badge
+
 func _pick(card_ui) -> void:
 	if _done:
 		return # Ignore extra clicks.
@@ -154,6 +171,8 @@ func _pick(card_ui) -> void:
 	var data: CardData = card_ui.data if card_ui else null
 	if data:
 		RunManager.add_card(data)
+		if Progress.unlock_card(data):
+			UiManager.show_toast("New card unlocked: %s" % data.card_name)
 	hide()
 	# Let the key press expire before handing control back; otherwise Space
 	# (select card, also Jump) makes Iris jump the moment exploration resumes.
