@@ -7,6 +7,6 @@ script = ExtResource("1_card")
 card_name = "Bandage"
 type = 2
 cost = 1
-heal = 4
+heal = 6
 description = "Bind the wound and keep going."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

@@ -6,10 +6,16 @@ class_name CardData
 ## text on the card always matches what it does. `description` is optional flavor.
 
 enum Type { ATTACK, DEFENSE, HEAL, DEBUFF }
+## Rare cards are offered less often and only 1 copy fits in the starting deck.
+enum Rarity { COMMON, RARE }
 
 @export var card_name: String
 @export var type: Type = Type.ATTACK
 @export var cost: int = 1
+@export var rarity: Rarity = Rarity.COMMON
+## Coins to unlock it in the main menu's Deck screen. 0 = unlocked from the
+## start. Locked cards can also be found in runs (see CardLibrary).
+@export var unlock_cost: int = 0
 
 @export_group("Effects")
 ## Damage per hit.
@@ -34,6 +40,13 @@ const TYPE_NAMES := {Type.ATTACK: "Attack", Type.DEFENSE: "Defense", Type.HEAL: 
 
 func type_name() -> String:
 	return TYPE_NAMES[type]
+
+func is_rare() -> bool:
+	return rarity == Rarity.RARE
+
+## Stable id for saving: the resource's file name ("slash" for slash.tres).
+func id() -> String:
+	return resource_path.get_file().get_basename()
 
 ## Plain-language rules text built from the effect values.
 func rules_text() -> String:

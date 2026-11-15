@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Thousand Cuts"
+type = 0
+cost = 2
+damage = 3
+hits = 4
+bleed = 3
+rarity = 1
+unlock_cost = 90
+description = "Too fast to count, too deep to heal."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

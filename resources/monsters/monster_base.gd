@@ -27,6 +27,12 @@ var weaken := 0
 var expose := 0
 ## Damage rolled for the enemy's next attack, shown to the player as its intent.
 var intent_damage := 0
+## Enrage: every attack after the first hits this much harder than the last,
+## so a fight can't be won by blocking forever.
+const ENRAGE_PER_TURN := 1
+## Extra damage from enrage on the current intent (0 on the first turn).
+var enrage_bonus := 0
+var _turns_rolled := 0
 
 const EXPOSE_MULTIPLIER := 1.5
 
@@ -55,7 +61,9 @@ func tick_expose() -> void:
 	expose = maxi(expose - 1, 0)
 
 func roll_intent() -> void:
-	intent_damage = randi_range(min_damage, max_damage)
+	enrage_bonus = ENRAGE_PER_TURN * _turns_rolled
+	_turns_rolled += 1
+	intent_damage = randi_range(min_damage, max_damage) + enrage_bonus
 
 ## What the next attack will deal after weaken.
 func planned_damage() -> int:

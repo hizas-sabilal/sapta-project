@@ -6,7 +6,7 @@
 script = ExtResource("1_card")
 card_name = "Double Stab"
 cost = 2
-damage = 5
+damage = 6
 hits = 2
 description = "Two strikes before they can react."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

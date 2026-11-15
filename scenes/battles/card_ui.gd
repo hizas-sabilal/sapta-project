@@ -87,10 +87,14 @@ func _build() -> void:
 	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var ribbon_style := StyleBoxFlat.new()
 	ribbon_style.bg_color = color.darkened(0.35)
+	if data.is_rare(): # Gold-trimmed ribbon marks rare cards.
+		ribbon_style.set_border_width_all(2)
+		ribbon_style.border_color = SELECTED_BORDER
 	ribbon_style.set_corner_radius_all(4)
 	ribbon.add_theme_stylebox_override("panel", ribbon_style)
 	_body.add_child(ribbon)
-	var type_label := _label(data.type_name().to_upper(), 11, color.lightened(0.6), HORIZONTAL_ALIGNMENT_CENTER)
+	var ribbon_text := data.type_name().to_upper() + ("  -  RARE" if data.is_rare() else "")
+	var type_label := _label(ribbon_text, 11, color.lightened(0.6), HORIZONTAL_ALIGNMENT_CENTER)
 	type_label.size = ribbon.size
 	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	ribbon.add_child(type_label)

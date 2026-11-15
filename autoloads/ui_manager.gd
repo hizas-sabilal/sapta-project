@@ -38,8 +38,10 @@ func choose_path(options: Array[Dictionary]) -> Dictionary:
 	return await screen.chosen
 
 ## Shows a card reward and waits; returns the picked card or null if skipped.
-func choose_card_reward(title: String = "") -> CardData:
+func choose_card_reward(title: String = "",
+		discovery_chance := CardLibrary.BATTLE_DISCOVERY_CHANCE) -> CardData:
 	var screen := CardRewardScreen.new()
+	screen.discovery_chance = discovery_chance
 	if title != "":
 		screen.title_text = title
 	_ui_container.add_child(screen)

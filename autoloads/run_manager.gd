@@ -4,33 +4,7 @@ extends Node
 
 const PLAYER_STATS: PlayerStats = preload("res://resources/characters/iris/iris_stats.tres")
 
-const STARTING_DECK: Array[CardData] = [
-	preload("res://resources/cardsdata/bandage.tres"),
-	preload("res://resources/cardsdata/block.tres"),
-	preload("res://resources/cardsdata/slash.tres"),
-	preload("res://resources/cardsdata/stab.tres"),
-	preload("res://resources/cardsdata/double_stab.tres"),
-]
-
-## Cards that can be offered as battle / treasure rewards (every card in the game).
-const CARD_POOL: Array[CardData] = [
-	preload("res://resources/cardsdata/slash.tres"),
-	preload("res://resources/cardsdata/stab.tres"),
-	preload("res://resources/cardsdata/double_stab.tres"),
-	preload("res://resources/cardsdata/heavy_strike.tres"),
-	preload("res://resources/cardsdata/flurry.tres"),
-	preload("res://resources/cardsdata/serrated_edge.tres"),
-	preload("res://resources/cardsdata/block.tres"),
-	preload("res://resources/cardsdata/shield_bash.tres"),
-	preload("res://resources/cardsdata/iron_wall.tres"),
-	preload("res://resources/cardsdata/parry.tres"),
-	preload("res://resources/cardsdata/bandage.tres"),
-	preload("res://resources/cardsdata/second_wind.tres"),
-	preload("res://resources/cardsdata/blood_drain.tres"),
-	preload("res://resources/cardsdata/hemorrhage.tres"),
-	preload("res://resources/cardsdata/intimidate.tres"),
-	preload("res://resources/cardsdata/expose.tres"),
-]
+## Cards live in CardLibrary; the starting deck and unlocks in Progress.
 
 const REWARD_CHOICES := 3
 
@@ -81,7 +55,7 @@ func start_new_run() -> void:
 	# Skill tree: Will to Live + Toughness.
 	max_hp = PLAYER_STATS.max_health + Progress.bonus("will") + Progress.bonus("toughness")
 	hp = max_hp
-	deck = STARTING_DECK.duplicate()
+	deck = Progress.starting_deck()
 	battles_won = 0
 	room_index = 0
 	run_seed = randi()
@@ -95,11 +69,11 @@ func add_card(card: CardData) -> void:
 	deck.append(card)
 	print("Added ", card.card_name, " to deck (", deck.size(), " cards)")
 
-## Distinct random cards from the pool.
-func get_reward_choices() -> Array[CardData]:
-	var pool := CARD_POOL.duplicate()
-	pool.shuffle()
-	return pool.slice(0, REWARD_CHOICES + Progress.bonus("keen_eye"))
+## Distinct random cards from the unlocked ones (rares are rarer). With
+## `discovery_chance`, one is a locked card instead; picking it unlocks it.
+func get_reward_choices(discovery_chance := CardLibrary.BATTLE_DISCOVERY_CHANCE) -> Array[CardData]:
+	return CardLibrary.roll_offer(Progress.unlocked_cards(), REWARD_CHOICES + Progress.bonus("keen_eye"),
+		Progress.locked_cards(), discovery_chance)
 
 func is_boss_room() -> bool:
 	return current_room.get("type") == RoomType.BOSS

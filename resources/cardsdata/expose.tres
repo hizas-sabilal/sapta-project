@@ -9,4 +9,5 @@ type = 3
 cost = 1
 expose = 2
 description = "Find the gap in their guard."
+unlock_cost = 40
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

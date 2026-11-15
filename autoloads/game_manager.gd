@@ -60,13 +60,22 @@ func end_battle(won: bool) -> void:
 		# Lost, or beat the boss: the run is over either way.
 		end_run()
 		if won:
-			_reward_room_clear() # Beating the boss clears the last room (toast over the menu).
+			# Beating the boss clears the last room (toast over the menu)
+			# and unlocks a card for good.
+			var extra := ""
+			var locked := Progress.locked_cards()
+			if not locked.is_empty():
+				var card: CardData = locked.pick_random()
+				Progress.unlock_card(card)
+				extra = "
+New card unlocked: %s" % card.card_name
+			_reward_room_clear(extra)
 
 ## Every cleared room pays coins into the permanent bank.
-func _reward_room_clear() -> void:
+func _reward_room_clear(extra := "") -> void:
 	var reward := Progress.room_clear_reward()
 	Progress.add_coins(reward)
-	UiManager.show_toast("Room cleared!  +%d coins" % reward)
+	UiManager.show_toast("Room cleared!  +%d coins%s" % [reward, extra])
 
 ## Iris ran out of HP outside a battle (traps). Same outcome as losing a fight.
 func player_killed() -> void:
@@ -98,7 +107,8 @@ func open_treasure() -> void:
 	if state != GameState.PLAYING:
 		return
 	_set_player_frozen(true)
-	await UiManager.choose_card_reward("Treasure! Choose a card")
+	# Chests always hold a locked card, while any are left.
+	await UiManager.choose_card_reward("Treasure! Choose a card", CardLibrary.TREASURE_DISCOVERY_CHANCE)
 	_set_player_frozen(false)
 
 ## Stops exploration movement while a menu is open.
