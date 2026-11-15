@@ -26,7 +26,7 @@ func start_game() -> void:
 func start_room() -> void:
 	var level = await change_level(LEVEL_001)
 	RoomBuilder.build(level, RunManager.current_room)
-	if RunManager.room_index == 0 and EXPLORATION_TUTORIAL.should_show():
+	if RunManager.room_index == 0: # First room of every run.
 		# Child of the level, so it hides during battles along with the level.
 		level.add_child(EXPLORATION_TUTORIAL.new())
 

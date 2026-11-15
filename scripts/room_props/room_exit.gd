@@ -1,6 +1,6 @@
 extends RoomProp
 ## Door at the end of a room. Locked while any node in the "room_guard" group
-## (the room's monster) is still in the level.
+## (the room's monsters) is still in the level.
 
 const LOCKED_COLOR := Color(0.55, 0.15, 0.15, 0.85)
 const OPEN_COLOR := Color(0.2, 0.55, 0.3, 0.85)
@@ -20,7 +20,12 @@ func is_locked() -> bool:
 func _process(_delta: float) -> void:
 	var locked := is_locked()
 	_door.color = LOCKED_COLOR if locked else OPEN_COLOR
-	label.text = "Defeat the monster\nto open" if locked else "Exit"
+	if locked:
+		var left := get_tree().get_nodes_in_group("room_guard").size()
+		label.text = "Defeat the monster\nto open" if left == 1 \
+			else "Defeat %d monsters\nto open" % left
+	else:
+		label.text = "Exit"
 
 func _on_player_entered(_player: Node2D) -> void:
 	if not is_locked():
