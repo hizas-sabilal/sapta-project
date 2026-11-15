@@ -57,6 +57,10 @@ var hp: int
 var deck: Array[CardData] = []
 var battles_won := 0
 
+## Seed for this run's room layouts: each run is different, but a given run
+## always generates the same rooms (print it to reproduce a layout).
+var run_seed := 0
+
 ## 0-based index of the room the player is in.
 var room_index := 0
 ## {"type": RoomType, "enemy": String (fights/boss only)}
@@ -68,8 +72,12 @@ func start_new_run() -> void:
 	deck = STARTING_DECK.duplicate()
 	battles_won = 0
 	room_index = 0
+	run_seed = randi()
 	current_room = _make_room(RoomType.FIGHT) # Always open with a fight.
-	print("New run started: HP ", hp, "/", max_hp, ", deck of ", deck.size())
+	print("New run started: seed ", run_seed, ", HP ", hp, "/", max_hp, ", deck of ", deck.size())
+
+func room_seed() -> int:
+	return hash([run_seed, room_index])
 
 func add_card(card: CardData) -> void:
 	deck.append(card)

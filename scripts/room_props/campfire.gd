@@ -23,7 +23,7 @@ func _on_player_entered(_player: Node2D) -> void:
 	if _used:
 		return
 	_used = true
-	var healed := RunManager.rest()
+	var healed: int = RunManager.rest()
 	label.text = "Rested: +%d HP" % healed
 	_flame.color = Color(0.35, 0.35, 0.35)
 	_flame.scale = Vector2(0.6, 0.4)

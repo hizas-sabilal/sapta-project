@@ -12,15 +12,17 @@ const FADE_TIME := 0.6
 var _panel: PanelContainer
 var _move_label: Label
 var _jump_label: Label
+var _dash_label: Label
 var _moved := false
 var _jumped := false
+var _dashed := false
 var _finishing := false
 
 static func should_show() -> bool:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		return true
-	return not cfg.get_value("tutorial", "exploration_done", false)
+	return not cfg.get_value("tutorial", "exploration_done_v2", false)
 
 func _ready() -> void:
 	# Default layer: menus in Main's OverlayContainer come later in the tree, so they draw on top.
@@ -45,6 +47,8 @@ func _ready() -> void:
 
 	_move_label = _add_line(lines, "Move:  A / D  or  Left / Right")
 	_jump_label = _add_line(lines, "Jump:  W / Space / Up  (hold to jump higher)")
+	_dash_label = _add_line(lines, "Dash:  Shift / K  (works in the air too)")
+	_add_line(lines, "Wall jump:  jump while sliding down a wall")
 	_add_line(lines, "Pause:  Esc")
 	_add_line(lines, "Touch a monster to start a battle")
 
@@ -62,7 +66,10 @@ func _process(_delta: float) -> void:
 	if not _jumped and Input.is_action_just_pressed("Move up"):
 		_jumped = true
 		_mark_done(_jump_label)
-	if _moved and _jumped and not _finishing:
+	if not _dashed and Input.is_action_just_pressed("Dash"):
+		_dashed = true
+		_mark_done(_dash_label)
+	if _moved and _jumped and _dashed and not _finishing:
 		_finish()
 
 func _mark_done(label: Label) -> void:
@@ -81,5 +88,5 @@ func _finish() -> void:
 func _save_done() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(SAVE_PATH) # Keep any other saved values; fine if the file doesn't exist yet.
-	cfg.set_value("tutorial", "exploration_done", true)
+	cfg.set_value("tutorial", "exploration_done_v2", true)
 	cfg.save(SAVE_PATH)
