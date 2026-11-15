@@ -12,4 +12,4 @@ func _on_body_entered(body: Node2D) -> void:
 			print('3 triggered')
 			
 			var enemies = monster.get_meta("Enemies").split(",")
-			GameManager.enter_battle(enemies)
+			GameManager.enter_battle(enemies, monster)

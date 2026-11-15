@@ -4,3 +4,5 @@
 
 [resource]
 script = ExtResource("1_agteu")
+character_name = "Iris"
+max_health = 30

@@ -15,3 +15,9 @@ const ENEMIES = {
 	"vampire": "res://resources/monsters/vampire/vampire.tscn",
 	"zombie_easy_female": "res://resources/monsters/zombie_easy_female/zombie_easy_female.tscn"
 }
+
+## Display names for room choices (without loading the enemy scene).
+const ENEMY_NAMES = {
+	"vampire": "Vampire",
+	"zombie_easy_female": "Zombie"
+}

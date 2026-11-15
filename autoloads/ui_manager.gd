@@ -30,6 +30,21 @@ func show_pause_menu() -> void:
 	_pause_menu = PAUSE_MENU_SCENE.instantiate()
 	_overlay_container.add_child(_pause_menu)
 
+## Shows the next-room choice and waits for the pick.
+func choose_path(options: Array[Dictionary]) -> Dictionary:
+	var screen := PathChoice.new()
+	screen.options = options
+	_ui_container.add_child(screen)
+	return await screen.chosen
+
+## Shows a card reward and waits; returns the picked card or null if skipped.
+func choose_card_reward(title: String = "") -> CardData:
+	var screen := CardRewardScreen.new()
+	if title != "":
+		screen.title_text = title
+	_ui_container.add_child(screen)
+	return await screen.finished
+
 func hide_pause_menu() -> void:
 	if not _pause_menu:
 		return
