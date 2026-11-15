@@ -186,10 +186,14 @@ func _spawn_afterimage() -> void:
 	var ghost := Sprite2D.new()
 	ghost.texture = sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
 	ghost.flip_h = sprite.flip_h
-	ghost.global_position = sprite.global_position
-	ghost.scale = sprite.scale
+	ghost.centered = sprite.centered
+	ghost.offset = sprite.offset
 	ghost.modulate = Color(0.6, 0.8, 1.0, 0.5)
+	ghost.z_index = sprite.z_index
+	# Add to the tree first: global_transform only resolves correctly once the
+	# ghost has a parent, otherwise the parent's offset gets applied twice.
 	get_parent().add_child(ghost)
+	ghost.global_transform = sprite.global_transform
 	var tween := ghost.create_tween()
 	tween.tween_property(ghost, "modulate:a", 0.0, 0.25)
 	tween.tween_callback(ghost.queue_free)
