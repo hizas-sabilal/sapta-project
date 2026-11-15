@@ -22,12 +22,13 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	pass
 
+## Emitted with this card when left-clicked. Whoever spawns the card decides
+## what a click means (select in hand, pick as reward, ...).
+signal clicked(card)
+
 func _gui_input(event):
-	
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		print("CARD CLICKED")
-		var battle_manager = get_tree().get_first_node_in_group("battle_manager")
-		battle_manager.select_card(self)
+		clicked.emit(self)
 
 func set_selected(value: bool):
 	selected = value

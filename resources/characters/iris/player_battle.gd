@@ -2,18 +2,19 @@ extends Node2D
 
 @onready var anim = $AnimatedSprite2D
 
-#TODO Make it Parameterize in Player Stats
-const max_hp := 30
+## Set from RunManager by the battle scene via setup().
+var max_hp := 30
 var hp := 30
+var block := 0
+
+func setup(current_hp: int, maximum_hp: int) -> void:
+	hp = current_hp
+	max_hp = maximum_hp
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	anim.play("idle")
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
-	
 func play_attack():
 	anim.play("attack")
 	await anim.animation_finished
@@ -24,23 +25,29 @@ func play_hurt():
 	await anim.animation_finished
 	anim.play("idle")
 
+## Block absorbs damage first, then the rest hits HP.
 func take_damage(damage: int):
-	print ("PLAYER HP Before damage:", hp)
-	print ("DAMAGE TAKEN: ", damage)
-	hp -= damage
-	print ("PLAYER HP after:", hp)
+	var absorbed: int = min(block, damage)
+	block -= absorbed
+	hp = max(hp - (damage - absorbed), 0)
+	print("PLAYER took ", damage, " (blocked ", absorbed, ") -> HP ", hp)
 
-	if (hp <= 0):
-		die()
+func add_block(amount: int):
+	block += amount
+	print("PLAYER BLOCK:", block)
+
+func reset_block():
+	block = 0
 
 func heal(amount: int):
-	if(hp <= max_hp):
-		hp += amount
-		print("PLAYER HEALED FOR:", amount)
-		print("HP after healed:", hp)
+	hp = min(hp + amount, max_hp)
+	print("PLAYER HEALED FOR:", amount, " -> HP ", hp)
 
+func is_dead() -> bool:
+	return hp <= 0
+
+## Plays the death animation and stays on the last frame.
 func die():
-	print ("PLAYER DEAD")
+	print("PLAYER DEAD")
 	anim.play("dead")
 	await anim.animation_finished
-	queue_free()

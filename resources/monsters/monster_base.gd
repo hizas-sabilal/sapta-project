@@ -22,15 +22,26 @@ func _process(delta: float) -> void:
 	pass
 
 func take_damage(amount: int):
-	current_hp -= amount	
+	current_hp = max(current_hp - amount, 0)
 	print(enemy_name, " HP : ", current_hp)
-	if current_hp <= 0:
-		die()
 
+## Called by the battle after spawning, to scale enemies deeper into a run.
+func apply_modifiers(hp_scale: float, damage_bonus: int = 0, name_override: String = "") -> void:
+	max_hp = roundi(max_hp * hp_scale)
+	current_hp = max_hp
+	min_damage += damage_bonus
+	max_damage += damage_bonus
+	if name_override != "":
+		enemy_name = name_override
+
+func is_dead() -> bool:
+	return current_hp <= 0
+
+## Plays the death animation and stays on the last frame.
+## The battle scene is responsible for cleaning up.
 func die():
 	anim.play(Constants.ANIM_DEAD)
 	await anim.animation_finished
-	queue_free()
 
 func play_hurt():
 	anim.play(Constants.ANIM_HURT)
