@@ -15,9 +15,13 @@ const MONSTER_HALF_HEIGHT := 64.0
 const BOSS_SCALE := 1.5
 const BOSS_TINT := Color(1.0, 0.55, 0.55)
 const BACKGROUND_SCALE := 0.75
-## Fight rooms spawn this many patrolling monsters (fewer if the room is too cramped).
+## Fight rooms spawn this many patrolling monsters (fewer if the room is too
+## cramped). Deeper rooms raise both ends by one (see _monster_count).
 const MIN_MONSTERS := 2
-const MAX_MONSTERS := 4
+const MAX_MONSTERS := 3
+## Spike damage: base, plus up to this much more at full difficulty.
+const SPIKE_DAMAGE := 3
+const SPIKE_EXTRA_DAMAGE := 3
 ## Max blocks a monster walks either side of where it spawned.
 const PATROL_REACH := 3
 
@@ -29,8 +33,9 @@ static func build(level: Node, room: Dictionary) -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = RunManager.room_seed()
-	var layout := RoomGenerator.generate(rng, type)
+	var layout := RoomGenerator.generate(rng, type, RunManager.difficulty())
 	RoomGenerator.paint(layout, world.get_node("TileMapLayer"))
+	_place_spikes(world, layout)
 
 	# The template's fixed camera and floor boundary don't fit generated rooms.
 	for old in ["Camera2D", "LevelBounds"]:
@@ -47,7 +52,7 @@ static func build(level: Node, room: Dictionary) -> void:
 		_setup_monster(monster, room.enemy, layout, layout.content_x, BOSS_SCALE)
 		monster.modulate = BOSS_TINT # The boss stands its ground: no patrol.
 	elif type == types.FIGHT:
-		var count := rng.randi_range(MIN_MONSTERS, MAX_MONSTERS)
+		var count := _monster_count(rng, layout.difficulty)
 		var columns := RoomGenerator.pick_monster_columns(layout, rng, count)
 		# Copy the template before any patrol is attached, so copies don't inherit one.
 		var monsters: Array[Node2D] = [monster]
@@ -75,6 +80,22 @@ static func build(level: Node, room: Dictionary) -> void:
 		_place(world, exit, layout.ground_point(layout.exit_x))
 
 	level.add_child(HUD.new())
+
+## 2-3 monsters early in the run, up to 3-4 near the boss.
+static func _monster_count(rng: RandomNumberGenerator, difficulty: float) -> int:
+	var lo := MIN_MONSTERS + (1 if difficulty >= 0.6 else 0)
+	var hi := MAX_MONSTERS + (1 if difficulty >= 0.3 else 0)
+	return rng.randi_range(lo, hi)
+
+static func _place_spikes(world: Node2D, layout: RoomGenerator.Layout) -> void:
+	var damage := SPIKE_DAMAGE + roundi(SPIKE_EXTRA_DAMAGE * layout.difficulty)
+	for strip in layout.spikes:
+		var spikes := Spikes.new()
+		spikes.width = strip.w * RoomGenerator.BLOCK
+		spikes.damage = damage
+		spikes.position = Vector2(strip.x * RoomGenerator.BLOCK, strip.top * RoomGenerator.BLOCK)
+		spikes.z_index = -1 # Iris and monsters draw over them.
+		world.add_child(spikes)
 
 static func _setup_monster(monster: Node2D, enemy: String, layout: RoomGenerator.Layout,
 		column: int, monster_scale: float) -> void:

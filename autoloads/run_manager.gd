@@ -130,6 +130,11 @@ func rest() -> int:
 	hp = min(hp + ceili(max_hp * REST_HEAL_FRACTION), max_hp)
 	return hp - before
 
+## How hard the current room's layout is: 0 in the first room, 1 in the last
+## room before the boss. Drives room size, features, spikes and monster count.
+func difficulty() -> float:
+	return clampf(room_index / float(ROOMS_PER_RUN - 2), 0.0, 1.0)
+
 func enemy_hp_scale() -> float:
 	return 1.0 + ENEMY_HP_SCALE_PER_ROOM * room_index
 

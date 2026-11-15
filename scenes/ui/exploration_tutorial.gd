@@ -42,6 +42,7 @@ func _ready() -> void:
 	_dash_label = _add_line(lines, "Dash:  %s  (works in the air too)" % Settings.describe("Dash"))
 	_add_line(lines, "Wall jump:  jump while sliding down a wall")
 	_add_line(lines, "Pause:  Esc")
+	_add_line(lines, "Spikes hurt: jump over them")
 	_add_line(lines, "Touch a monster to start a battle")
 	_add_line(lines, "Defeat every monster to unlock the exit")
 

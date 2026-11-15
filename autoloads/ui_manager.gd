@@ -45,6 +45,21 @@ func choose_card_reward(title: String = "") -> CardData:
 	_ui_container.add_child(screen)
 	return await screen.finished
 
+## Big centered text over the game for `seconds`; await it to wait it out.
+func show_message(text: String, seconds: float) -> void:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	label.add_theme_font_size_override("font_size", 64)
+	label.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+	label.add_theme_constant_override("outline_size", 10)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_ui_container.add_child(label)
+	await get_tree().create_timer(seconds).timeout
+	label.queue_free()
+
 func hide_pause_menu() -> void:
 	if not _pause_menu:
 		return

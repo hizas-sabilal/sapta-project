@@ -40,6 +40,14 @@ extends CharacterBody2D
 @export var dash_cooldown := 0.35
 @export var afterimage_interval := 0.03
 
+@export_group("Hurt")
+## Seconds of invulnerability after taking damage (Iris blinks meanwhile).
+@export var hurt_invulnerability := 1.0
+## Upward bounce when hurt, as a fraction of a full jump's speed.
+@export var hurt_bounce_ratio := 0.75
+@export var hurt_push := 200.0 ## Horizontal knockback, px/s.
+@export var hurt_control_lock := 0.2 ## Steering is locked briefly so the knockback reads.
+
 @export_group("Juice")
 ## Sprite stretch on jump / squash on land. Set to 0 to disable.
 @export var squash_amount := 0.18
@@ -61,6 +69,7 @@ var _dash_dir := 1.0
 var _can_dash := true
 var _afterimage_timer := 0.0
 var _was_on_floor := true
+var _invuln_timer := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -95,6 +104,58 @@ func _physics_process(delta: float) -> void:
 	_was_on_floor = is_on_floor()
 
 	_update_animation(direction, on_wall, delta)
+	_update_invulnerability(delta)
+
+## Called by traps. Takes HP from the run, knocks Iris up and away from
+## `from_x`, and makes her briefly invulnerable. Ignored while invulnerable.
+func hurt(amount: int, from_x: float) -> void:
+	if _invuln_timer > 0.0 or RunManager.hp <= 0:
+		return
+	RunManager.hp = maxi(RunManager.hp - amount, 0)
+	_invuln_timer = hurt_invulnerability
+	_popup("-%d" % amount)
+
+	var away := signf(global_position.x - from_x)
+	if away == 0.0:
+		away = 1.0 if sprite.flip_h else -1.0 # Back the way she was facing from.
+	_dash_timer = 0.0
+	_jump_buffer_timer = 0.0
+	_coyote_timer = 0.0
+	velocity = Vector2(away * hurt_push, _jump_velocity * hurt_bounce_ratio)
+	_control_lock_timer = hurt_control_lock
+	sprite.modulate = Color(1.0, 0.45, 0.45)
+
+	if RunManager.hp <= 0:
+		GameManager.player_killed()
+
+func _update_invulnerability(delta: float) -> void:
+	if _invuln_timer <= 0.0:
+		return
+	_invuln_timer -= delta
+	if _invuln_timer <= 0.0:
+		sprite.modulate = Color.WHITE
+	else:
+		# Blink, fading the red hit tint back to normal.
+		var tint := Color.WHITE.lerp(Color(1.0, 0.45, 0.45), _invuln_timer / hurt_invulnerability)
+		tint.a = 0.35 if int(_invuln_timer * 14.0) % 2 == 0 else 1.0
+		sprite.modulate = tint
+
+## Floating damage number above Iris.
+func _popup(text: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(1, 0.35, 0.3))
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.z_index = 10
+	get_parent().add_child(label)
+	label.position = position - Vector2(label.get_combined_minimum_size().x / 2.0, 80)
+	var tween := label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.8).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_delay(0.3)
+	tween.chain().tween_callback(label.queue_free)
 
 func _tick_timers(delta: float, on_floor: bool, on_wall: bool) -> void:
 	_coyote_timer = coyote_time if on_floor else _coyote_timer - delta

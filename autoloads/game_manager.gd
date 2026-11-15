@@ -60,6 +60,15 @@ func end_battle(won: bool) -> void:
 		# Lost, or beat the boss: the run is over either way.
 		end_run()
 
+## Iris ran out of HP outside a battle (traps). Same outcome as losing a fight.
+func player_killed() -> void:
+	if state != GameState.PLAYING:
+		return
+	state = GameState.MENU # Blocks pausing and battles while the message shows.
+	_set_player_frozen(true)
+	await UiManager.show_message("YOU DIED", 2.0)
+	end_run()
+
 func end_run() -> void:
 	battle_monster = null
 	SceneManager.clear_game()
