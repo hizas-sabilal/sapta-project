@@ -9,6 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_xqga4")
 
 [node name="Panel" type="Panel" parent="." unique_id=1748321927]
 layout_mode = 0
@@ -32,7 +33,6 @@ layout_mode = 2
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "Start"
-script = ExtResource("1_xqga4")
 
 [node name="OptionsButton" type="Button" parent="Panel/CenterContainer/VBoxContainer" unique_id=1967221872]
 custom_minimum_size = Vector2(300, 60)
@@ -44,4 +44,6 @@ custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "Exit"
 
-[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/StartButton" to="Panel/CenterContainer/VBoxContainer/StartButton" method="_on_start_button_pressed"]
+[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/OptionsButton" to="." method="_on_options_button_pressed"]
+[connection signal="pressed" from="Panel/CenterContainer/VBoxContainer/ExitButton" to="." method="_on_exit_button_pressed"]

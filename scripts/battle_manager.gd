@@ -34,6 +34,12 @@ var enemy_intent_label: Label
 var enemy_status_label: Label
 var _popup_stack := {} ## Fighter -> popups currently rising above it.
 
+## Keyboard cursor over the hand. Only shown once a card key is pressed,
+## so mouse players don't see a stray highlight.
+var _focus_index := 0
+var _show_focus := false
+var _keys_hint: Label
+
 
 # 1. Configuration method called BEFORE adding to scene tree
 func set_enemies(enemies: PackedStringArray) -> void:
@@ -48,6 +54,7 @@ func _ready() -> void:
 	camera.make_current()
 
 	hand_container.add_theme_constant_override("separation", 18)
+	_create_keys_hint()
 	setup_deck()
 	player.setup(RunManager.hp, RunManager.max_hp)
 	_create_status_labels()
@@ -182,6 +189,65 @@ func _enemy_status_text() -> String:
 		parts.append("Exposed %d" % enemy.expose)
 	return "   ".join(parts)
 
+## One-line reminder of the card keys, under the Action! button.
+func _create_keys_hint() -> void:
+	_keys_hint = Label.new()
+	# The Action! key is on the button's own badge.
+	_keys_hint.text = "%s  |  %s: choose card      %s: select" % [
+		Settings.describe("card_prev"), Settings.describe("card_next"),
+		Settings.describe("card_select")]
+	_keys_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_keys_hint.add_theme_font_size_override("font_size", 15)
+	_keys_hint.add_theme_constant_override("outline_size", 4)
+	_keys_hint.add_theme_color_override("font_outline_color", Color.BLACK)
+	_keys_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_keys_hint.position = Vector2(0, 370)
+	_keys_hint.size = Vector2(1280, 24)
+	battle_ui.add_child(_keys_hint)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if busy or battle_over or not (event is InputEventKey):
+		return
+	if event.is_action_pressed("card_prev", true):
+		_move_focus(-1)
+	elif event.is_action_pressed("card_next", true):
+		_move_focus(1)
+	elif event.is_action_pressed("card_select"):
+		if not hand.is_empty():
+			_show_focus = true
+			select_card(hand[_focus_index])
+	elif event.is_action_pressed("card_execute"):
+		_on_execute_button_pressed()
+	else:
+		var slot := _card_slot_pressed(event)
+		if slot < 0:
+			return # Not a card key; leave it for others.
+		if slot < hand.size():
+			_focus_index = slot
+			_show_focus = true
+			select_card(hand[slot])
+	get_viewport().set_input_as_handled()
+
+## Index of the "Card N" key in this event, or -1.
+func _card_slot_pressed(event: InputEvent) -> int:
+	for i in MAX_CARD_IN_HAND:
+		if event.is_action_pressed("card_%d" % (i + 1)):
+			return i
+	return -1
+
+func _move_focus(step: int) -> void:
+	if hand.is_empty():
+		return
+	if _show_focus:
+		_focus_index = wrapi(_focus_index + step, 0, hand.size())
+	_show_focus = true # First press just reveals the cursor where it is.
+	_update_focus()
+
+func _update_focus() -> void:
+	_focus_index = clampi(_focus_index, 0, maxi(hand.size() - 1, 0))
+	for i in hand.size():
+		hand[i].set_focused(_show_focus and not busy and not battle_over and i == _focus_index)
+
 func draw_hand():
 	while hand.size() < MAX_CARD_IN_HAND:
 		if deck.is_empty():
@@ -205,11 +271,13 @@ func draw_hand():
 func _refresh_playable() -> void:
 	for card in hand:
 		card.set_playable(not busy and used_AP + card.data.cost <= ACTION_POINT)
+	execute_button.set_state(selected_cards.size(), used_AP, ACTION_POINT)
 
 func _set_busy(value: bool) -> void:
 	busy = value
 	execute_button.disabled = value
 	_refresh_playable()
+	_update_focus()
 
 func start_player_turn():
 	used_AP = 0
@@ -221,6 +289,8 @@ func start_player_turn():
 func select_card(card):
 	if busy or battle_over:
 		return
+	_focus_index = maxi(hand.find(card), 0) # Mouse clicks move the cursor too.
+	_update_focus()
 
 	if card.selected:
 		selected_cards.erase(card)
@@ -365,6 +435,7 @@ func _end_battle(won: bool) -> void:
 	_set_busy(true)
 	hand_container.hide()
 	execute_button.hide()
+	_keys_hint.hide()
 	RunManager.hp = player.hp # Damage carries over to the next fight.
 
 	var boss: bool = RunManager.is_boss_room()

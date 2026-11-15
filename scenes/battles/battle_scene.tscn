@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://cl16oi5kq7hmw" path="res://resources/backgrounds/orig_big.png" id="1_g0lu4"]
 [ext_resource type="Script" uid="uid://de5bx244x1ph2" path="res://scripts/battle_manager.gd" id="1_gvb6n"]
 [ext_resource type="PackedScene" uid="uid://0c57d5bgiavd" path="res://resources/characters/iris/player_battle.tscn" id="3_vjuxw"]
+[ext_resource type="Script" path="res://scenes/battles/action_button.gd" id="4_actbtn"]
 
 [node name="BattleScene" type="Node2D" unique_id=510226263 groups=["battle_manager"]]
 script = ExtResource("1_gvb6n")
@@ -45,12 +46,13 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -75.0
-offset_top = 300.0
-offset_right = 75.0
-offset_bottom = 345.0
+offset_left = -115.0
+offset_top = 296.0
+offset_right = 115.0
+offset_bottom = 360.0
 grow_horizontal = 2
 text = "Action!"
+script = ExtResource("4_actbtn")
 
 [node name="PlayerBattle" parent="." unique_id=178275334 instance=ExtResource("3_vjuxw")]
 position = Vector2(219, 587)
