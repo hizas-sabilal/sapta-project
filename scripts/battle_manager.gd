@@ -26,8 +26,13 @@ var used_AP := 0
 var busy := false
 var battle_over := false
 
-var player_status: Label
-var enemy_status: Label
+var player_hp_bar: HpBar
+var ap_dots: ApDots
+var enemy_name_label: Label
+var enemy_hp_bar: HpBar
+var enemy_intent_label: Label
+var enemy_status_label: Label
+var _popup_stack := {} ## Fighter -> popups currently rising above it.
 
 
 # 1. Configuration method called BEFORE adding to scene tree
@@ -42,6 +47,7 @@ func _ready() -> void:
 	add_child(camera)
 	camera.make_current()
 
+	hand_container.add_theme_constant_override("separation", 18)
 	setup_deck()
 	player.setup(RunManager.hp, RunManager.max_hp)
 	_create_status_labels()
@@ -96,34 +102,91 @@ func setup_deck() -> void:
 	deck = RunManager.deck.duplicate()
 	deck.shuffle()
 
-## HP / block / AP readouts in the top corners (the hand sits top-center).
+## Status panels in the top corners (the hand sits top-center):
+## name, HP bar (with block badge) and AP dots for Iris; name, HP bar,
+## intent and status effects for the enemy.
 func _create_status_labels() -> void:
-	player_status = Label.new()
-	player_status.position = Vector2(24, 20)
-	player_status.add_theme_font_size_override("font_size", 24)
-	battle_ui.add_child(player_status)
+	var left := _status_box(Vector2(48, 16))
+	left.add_child(_title_label("Iris"))
+	player_hp_bar = HpBar.new()
+	player_hp_bar.custom_minimum_size = Vector2(280, 28)
+	left.add_child(player_hp_bar)
+	var ap_row := HBoxContainer.new()
+	ap_row.add_theme_constant_override("separation", 10)
+	ap_row.add_child(_small_label("AP"))
+	ap_dots = ApDots.new()
+	ap_dots.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	ap_row.add_child(ap_dots)
+	left.add_child(ap_row)
 
-	enemy_status = Label.new()
-	enemy_status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	enemy_status.offset_left = -340
-	enemy_status.offset_right = -24
-	enemy_status.offset_top = 20
-	enemy_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	enemy_status.add_theme_font_size_override("font_size", 24)
-	battle_ui.add_child(enemy_status)
+	var right := _status_box(Vector2(1280 - 24 - 280, 16))
+	enemy_name_label = _title_label("")
+	enemy_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	right.add_child(enemy_name_label)
+	enemy_hp_bar = HpBar.new()
+	enemy_hp_bar.custom_minimum_size = Vector2(280, 28)
+	right.add_child(enemy_hp_bar)
+	enemy_intent_label = _small_label("")
+	enemy_intent_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	right.add_child(enemy_intent_label)
+	enemy_status_label = _small_label("")
+	enemy_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	enemy_status_label.add_theme_color_override("font_color", Color(0.85, 0.7, 1.0))
+	right.add_child(enemy_status_label)
+
+func _status_box(at: Vector2) -> VBoxContainer:
+	var box := VBoxContainer.new()
+	box.position = at
+	box.custom_minimum_size = Vector2(280, 0)
+	box.add_theme_constant_override("separation", 6)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	battle_ui.add_child(box)
+	return box
+
+func _title_label(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_constant_override("outline_size", 5)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	return label
+
+func _small_label(text: String) -> Label:
+	var label := _title_label(text)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_constant_override("outline_size", 4)
+	return label
 
 func _process(_delta: float) -> void:
-	if player_status:
-		player_status.text = "Iris\nHP %d/%d\nBlock %d\nAP %d/%d" % [
-			player.hp, player.max_hp, player.block, ACTION_POINT - used_AP, ACTION_POINT]
-	if enemy_status and enemy:
-		enemy_status.text = "%s\nHP %d/%d" % [enemy.enemy_name, enemy.current_hp, enemy.max_hp]
+	if player_hp_bar:
+		player_hp_bar.set_values(player.hp, player.max_hp, player.block)
+		ap_dots.set_values(ACTION_POINT - used_AP, ACTION_POINT)
+	if enemy_hp_bar and enemy:
+		enemy_name_label.text = enemy.enemy_name
+		enemy_hp_bar.set_values(enemy.current_hp, enemy.max_hp)
+		enemy_intent_label.text = _intent_text()
+		enemy_status_label.text = _enemy_status_text()
+
+func _intent_text() -> String:
+	if battle_over or enemy.is_dead():
+		return ""
+	if enemy.weaken > 0:
+		return "Intent: Attack %d  (-%d = %d)" % [enemy.intent_damage, enemy.weaken, enemy.planned_damage()]
+	return "Intent: Attack %d" % enemy.intent_damage
+
+func _enemy_status_text() -> String:
+	var parts: PackedStringArray = []
+	if enemy.bleed > 0:
+		parts.append("Bleed %d" % enemy.bleed)
+	if enemy.expose > 0:
+		parts.append("Exposed %d" % enemy.expose)
+	return "   ".join(parts)
 
 func draw_hand():
 	while hand.size() < MAX_CARD_IN_HAND:
 		if deck.is_empty():
 			if discard_pile.is_empty():
-				return
+				break
 			# Reshuffle the discard pile back into the deck.
 			deck = discard_pile.duplicate()
 			discard_pile.clear()
@@ -136,14 +199,22 @@ func draw_hand():
 		card_ui.clicked.connect(select_card)
 		hand.append(card_ui)
 		hand_container.add_child(card_ui)
+	_refresh_playable()
+
+## Dims cards that don't fit in the AP left this turn.
+func _refresh_playable() -> void:
+	for card in hand:
+		card.set_playable(not busy and used_AP + card.data.cost <= ACTION_POINT)
 
 func _set_busy(value: bool) -> void:
 	busy = value
 	execute_button.disabled = value
+	_refresh_playable()
 
 func start_player_turn():
 	used_AP = 0
 	player.reset_block() # Block only lasts through the enemy's next attack.
+	enemy.roll_intent()
 	draw_hand()
 	_set_busy(false)
 
@@ -155,44 +226,28 @@ func select_card(card):
 		selected_cards.erase(card)
 		card.set_selected(false)
 		used_AP -= card.data.cost
-		print("usedAP:", used_AP)
-		return
-
-	if used_AP + card.data.cost <= ACTION_POINT:
+	elif used_AP + card.data.cost <= ACTION_POINT:
 		used_AP += card.data.cost
 		selected_cards.append(card)
 		card.set_selected(true)
-		print("Selected:", card.data.card_name)
-		print("usedAP:", used_AP)
 	else:
-		print("Not enough AP")
+		_popup(ap_dots.get_global_rect().get_center() + Vector2(0, 30), "Not enough AP", Color(1, 0.6, 0.4))
+	_refresh_playable()
 
 func _on_execute_button_pressed() -> void:
 	if busy or battle_over:
 		return
 	execute_turn()
 
+## Plays the selected cards in the order they were picked.
 func execute_turn():
 	_set_busy(true)
-	print("EXECUTE TURN")
 
 	for card in selected_cards:
-		var data: CardData = card.data
-		print(data.card_name)
-
-		if data.damage > 0:
-			enemy.take_damage(data.damage)
-			await player.play_attack()
-			if enemy.is_dead():
-				await enemy.die()
-				break # Remaining cards are not needed.
-			await enemy.play_hurt()
-
-		if data.block > 0:
-			player.add_block(data.block)
-
-		if data.heal > 0:
-			player.heal(data.heal)
+		await _play_card(card.data)
+		if enemy.is_dead():
+			break # Remaining cards are not needed.
+		await get_tree().create_timer(0.25).timeout
 
 	# Remove executed cards
 	for card in selected_cards:
@@ -202,26 +257,108 @@ func execute_turn():
 	selected_cards.clear()
 
 	if enemy.is_dead():
+		await enemy.die()
 		_end_battle(true)
 		return
 
+	enemy.tick_expose()
 	enemy_turn()
 
+## Applies one card's effects in CardData order: damage (x hits, with
+## lifesteal), block, heal, bleed, weaken, expose. Stops early if the enemy dies.
+func _play_card(data: CardData) -> void:
+	print("Play ", data.card_name)
+
+	if data.damage > 0:
+		for i in data.hits:
+			var dealt: int = enemy.take_hit(data.damage)
+			_popup_at(enemy, "-%d" % dealt, Color(1, 0.35, 0.3))
+			if data.lifesteal > 0:
+				var restored: int = player.heal(int(dealt * data.lifesteal / 100.0))
+				if restored > 0:
+					_popup_at(player, "+%d HP" % restored, Color(0.5, 1, 0.55))
+			await player.play_attack()
+			if enemy.is_dead():
+				return
+			await enemy.play_hurt()
+
+	if data.block > 0:
+		player.add_block(data.block)
+		_popup_at(player, "+%d Block" % data.block, Color(0.55, 0.75, 1))
+
+	if data.heal > 0:
+		var healed: int = player.heal(data.heal)
+		_popup_at(player, "+%d HP" % healed, Color(0.5, 1, 0.55))
+
+	if data.bleed > 0:
+		enemy.bleed += data.bleed
+		_popup_at(enemy, "Bleed +%d" % data.bleed, Color(1, 0.3, 0.35))
+
+	if data.weaken > 0:
+		enemy.weaken += data.weaken
+		_popup_at(enemy, "Weakened -%d" % data.weaken, Color(0.8, 0.6, 1))
+
+	if data.expose > 0:
+		enemy.expose += data.expose
+		_popup_at(enemy, "Exposed", Color(0.8, 0.6, 1))
+
 func enemy_turn():
-	var damage = enemy.attack()
+	# Bleed hurts before the enemy can act.
+	var bled: int = enemy.tick_bleed()
+	if bled > 0:
+		_popup_at(enemy, "-%d Bleed" % bled, Color(1, 0.3, 0.35))
+		if enemy.is_dead():
+			await enemy.die()
+			_end_battle(true)
+			return
+		await enemy.play_hurt()
+
+	var damage: int = enemy.attack()
 	print("Enemy attacks: ", damage)
 
-	player.take_damage(damage)
+	var blocked: int = min(player.block, damage)
+	var lost: int = player.take_damage(damage)
 	await enemy.play_attack()
+	if blocked > 0:
+		_popup_at(player, "Blocked %d" % blocked, Color(0.55, 0.75, 1))
+	if lost > 0 or blocked == 0:
+		_popup_at(player, "-%d" % lost, Color(1, 0.35, 0.3))
 
 	if player.is_dead():
 		await player.die()
 		_end_battle(false)
 		return
 
-	await player.play_hurt()
-	await get_tree().create_timer(1.0).timeout
+	if lost > 0:
+		await player.play_hurt()
+	await get_tree().create_timer(0.8).timeout
 	start_player_turn()
+
+## Floating combat text above a fighter. Popups fired close together stack upward.
+func _popup_at(target: Node2D, text: String, color: Color) -> void:
+	var stack: int = _popup_stack.get(target, 0)
+	_popup_stack[target] = stack + 1
+	var above := target.get_global_transform_with_canvas().origin + Vector2(0, -170 - stack * 30)
+	_popup(above, text, color)
+	await get_tree().create_timer(0.35).timeout
+	if is_instance_valid(target):
+		_popup_stack[target] = maxi(_popup_stack.get(target, 1) - 1, 0)
+
+func _popup(screen_pos: Vector2, text: String, color: Color) -> void:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_constant_override("outline_size", 6)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	battle_ui.add_child(label)
+	label.position = screen_pos - label.get_combined_minimum_size() / 2.0
+	var tween := label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 50, 0.9).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.9).set_delay(0.4)
+	tween.chain().tween_callback(label.queue_free)
 
 func _end_battle(won: bool) -> void:
 	battle_over = true

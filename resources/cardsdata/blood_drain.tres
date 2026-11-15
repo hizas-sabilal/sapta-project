@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Blood Drain"
+type = 2
+cost = 2
+damage = 6
+lifesteal = 100
+description = "Take back what they took from you."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

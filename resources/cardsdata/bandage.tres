@@ -1,11 +1,12 @@
 [gd_resource type="Resource" script_class="CardData" format=3 uid="uid://w5wkkyj4bxdf"]
 
-[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_0i242"]
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
 
 [resource]
-script = ExtResource("1_0i242")
+script = ExtResource("1_card")
 card_name = "Bandage"
-heal = 2
+type = 2
 cost = 1
-description = "You andage your wounds and restore 2 hp."
+heal = 4
+description = "Bind the wound and keep going."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"
