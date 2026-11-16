@@ -8,5 +8,5 @@ card_name = "Guard"
 type = 1
 cost = 1
 block = 6
-description = "Raise your blade and brace."
+description = "Arms up. Take it on the forearm."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

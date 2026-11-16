@@ -1,7 +1,9 @@
 extends Control
 class_name DeckMenu
-## Main-menu deck builder. Left: every card in the game (locked ones show
-## their coin price). Right: the starting deck every run begins with.
+## Main-menu deck builder for the starting weapon (chosen in Equipment).
+## Left: the general cards and that weapon's cards (locked ones show their
+## coin price). Right: the starting deck runs with that weapon begin with.
+## Every weapon keeps its own starting deck.
 ## Click / Enter a card to add it (or buy it if locked); click / Enter a deck
 ## slot to take that card out. A complete deck is saved right away.
 ##
@@ -18,11 +20,14 @@ const GOLD := Color(1.0, 0.85, 0.3)
 const ERROR := Color(1, 0.6, 0.45)
 const SIDE_X := 960.0
 const SIDE_W := 290.0
+const SLOT_STEP := 46 ## Vertical spacing of the deck slots.
 
 enum Zone { GRID, SIDE }
 
+var _weapon: WeaponData
+var _collection: Array[CardData] = [] ## general cards + the weapon's pool
 var _deck: Array[CardData] = []
-var _cards: Array = [] ## card_ui per CardLibrary.ALL entry
+var _cards: Array = [] ## card_ui per _collection entry
 var _slots: Array[Control] = [] ## wrapper of each card_ui (what the grid lays out)
 var _overlays: Array[Label] = [] ## "LOCKED / price" or "In deck x2" under each card
 var _side_buttons: Array[Button] = [] ## deck slots, then Reset, then Back
@@ -42,17 +47,19 @@ var _leave_warned := false ## Back was pressed once with an incomplete deck.
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_deck = Progress.starting_deck()
+	_weapon = Progress.starting_weapon()
+	_collection = CardLibrary.cards_for(_weapon)
+	_deck = Progress.starting_deck(_weapon)
 
 	var bg := ColorRect.new()
 	bg.color = Color(0.06, 0.05, 0.09, 0.97)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var title := _label("Deck", 36, Color.WHITE)
+	var title := _label("Deck  -  %s" % _weapon.weapon_name, 36, Color.WHITE)
 	title.position = Vector2(40, 24)
 	add_child(title)
-	var subtitle := _label("Build the deck every run starts with. Unlock cards with coins, or find them in runs (NEW! cards).", 15, Color(0.75, 0.75, 0.82))
+	var subtitle := _label("General cards + %s cards (change weapon in Equipment). Unlock cards with coins, or find them in runs." % _weapon.weapon_name, 15, Color(0.75, 0.75, 0.82))
 	subtitle.position = Vector2(40, 72)
 	add_child(subtitle)
 
@@ -100,8 +107,8 @@ func _build_collection() -> void:
 	_scroll.add_child(grid)
 
 	var card_size: Vector2 = (CardUI.CARD_SIZE + Vector2(0, CardUI.LIFT_ROOM)) * CARD_SCALE
-	for i in CardLibrary.ALL.size():
-		var data: CardData = CardLibrary.ALL[i]
+	for i in _collection.size():
+		var data: CardData = _collection[i]
 		var slot := Control.new()
 		slot.custom_minimum_size = card_size + Vector2(0, 22)
 		slot.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -131,21 +138,22 @@ func _build_side() -> void:
 	add_child(_deck_title)
 
 	for i in CardLibrary.DECK_SIZE:
-		var button := _side_button(Vector2(SIDE_X, 140 + i * 52))
+		var button := _side_button(Vector2(SIDE_X, 140 + i * SLOT_STEP))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(func(): _move_cursor_to(Zone.SIDE, i); _activate())
 
-	_problem = _label("", 15, ERROR)
-	_problem.position = Vector2(SIDE_X, 140 + CardLibrary.DECK_SIZE * 52)
-	_problem.size = Vector2(SIDE_W, 60)
+	var below := 140 + CardLibrary.DECK_SIZE * SLOT_STEP
+	_problem = _label("", 14, ERROR)
+	_problem.position = Vector2(SIDE_X, below)
+	_problem.size = Vector2(SIDE_W, 44)
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_problem)
 
-	var reset := _side_button(Vector2(SIDE_X, 480))
+	var reset := _side_button(Vector2(SIDE_X, below + 48))
 	reset.text = "Reset to default"
 	var reset_index := _side_buttons.size() - 1
 	reset.pressed.connect(func(): _move_cursor_to(Zone.SIDE, reset_index); _activate())
-	var back := _side_button(Vector2(SIDE_X, 536))
+	var back := _side_button(Vector2(SIDE_X, below + 98))
 	back.text = "Back"
 	var back_index := _side_buttons.size() - 1
 	back.pressed.connect(func(): _move_cursor_to(Zone.SIDE, back_index); _activate())
@@ -153,7 +161,7 @@ func _build_side() -> void:
 func _side_button(at: Vector2) -> Button:
 	var button := Button.new()
 	button.position = at
-	button.size = Vector2(SIDE_W, 46)
+	button.size = Vector2(SIDE_W, 42)
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 17)
 	var index := _side_buttons.size()
@@ -177,8 +185,8 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 func _refresh() -> void:
 	_coins_label.text = "Coins: %d" % Progress.coins
 
-	for i in CardLibrary.ALL.size():
-		var data: CardData = CardLibrary.ALL[i]
+	for i in _collection.size():
+		var data: CardData = _collection[i]
 		var overlay := _overlays[i]
 		var copies := CardLibrary.count_in(_deck, data)
 		if not Progress.is_card_unlocked(data):
@@ -201,14 +209,14 @@ func _refresh() -> void:
 		else:
 			button.text = "  - empty -"
 			button.modulate = Color(1, 1, 1, 0.55)
-	_problem.text = CardLibrary.deck_problem(_deck)
+	_problem.text = CardLibrary.deck_problem(_deck, _weapon)
 	_update_cursor()
 	_show_detail()
 
 func _show_detail() -> void:
 	var card: CardData = null
 	if _zone == Zone.GRID:
-		card = CardLibrary.ALL[_grid_index]
+		card = _collection[_grid_index]
 	elif _side_index < _deck.size():
 		card = _deck[_side_index]
 	if card == null:
@@ -216,7 +224,7 @@ func _show_detail() -> void:
 		_detail_text.text = ""
 		if _zone == Zone.SIDE and _side_index == CardLibrary.DECK_SIZE:
 			_detail_text.text = "Go back to the default deck: %s." % ", ".join(
-				CardLibrary.DEFAULT_DECK.map(func(c): return c.card_name))
+				CardLibrary.default_deck(_weapon).map(func(c): return c.card_name))
 		return
 	_detail_title.text = "%s   (%s%s, %d AP)" % [card.card_name, "Rare " if card.is_rare() else "",
 		card.type_name(), card.cost]
@@ -233,7 +241,7 @@ func _show_detail() -> void:
 func _activate() -> void:
 	_status.add_theme_color_override("font_color", ERROR)
 	if _zone == Zone.GRID:
-		var card: CardData = CardLibrary.ALL[_grid_index]
+		var card: CardData = _collection[_grid_index]
 		if not Progress.is_card_unlocked(card):
 			if Progress.buy_card(card):
 				_say("Unlocked %s!" % card.card_name, GOLD)
@@ -252,7 +260,7 @@ func _activate() -> void:
 			_deck.remove_at(_side_index)
 			_deck_changed()
 	elif _side_index == CardLibrary.DECK_SIZE:
-		_deck = CardLibrary.DEFAULT_DECK.duplicate()
+		_deck = CardLibrary.default_deck(_weapon)
 		_deck_changed()
 		_say("Deck reset to the default.", Color(0.55, 0.85, 1.0))
 	else:
@@ -263,9 +271,9 @@ func _activate() -> void:
 func _deck_changed() -> void:
 	_leave_warned = false
 	_status.text = ""
-	_deck.sort_custom(func(a, b): return CardLibrary.ALL.find(a) < CardLibrary.ALL.find(b))
-	if CardLibrary.deck_problem(_deck) == "":
-		Progress.set_starting_deck(_deck)
+	_deck.sort_custom(func(a, b): return _collection.find(a) < _collection.find(b))
+	if CardLibrary.deck_problem(_deck, _weapon) == "":
+		Progress.set_starting_deck(_weapon, _deck)
 		_say("Starting deck saved.", Color(0.55, 0.85, 1.0))
 
 func _say(text: String, color := ERROR) -> void:
@@ -349,7 +357,7 @@ func _input(event: InputEvent) -> void:
 
 ## An incomplete deck isn't saved: warn once, then leave on the second try.
 func _try_close() -> void:
-	if CardLibrary.deck_problem(_deck) != "" and not _leave_warned:
+	if CardLibrary.deck_problem(_deck, _weapon) != "" and not _leave_warned:
 		_leave_warned = true
 		_say("Deck not complete: runs keep using your last complete deck. Back again to leave anyway.")
 		return

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Fire Shell"
+cost = 2
+damage = 4
+hits = 2
+bleed = 5
+ammo = 1
+unlock_cost = 45
+description = "Incendiary shell. It keeps burning."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

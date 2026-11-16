@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://resources/weapons/WeaponData.gd" id="1_weapon"]
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="2_card"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/shot.tres" id="c_shot"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/double_shot.tres" id="c_double_shot"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/reload.tres" id="c_reload"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/pistol_whip.tres" id="c_pistol_whip"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/covering_fire.tres" id="c_covering_fire"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/hollow_point.tres" id="c_hollow_point"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/tactical_reload.tres" id="c_tactical_reload"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/steady_aim.tres" id="c_steady_aim"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/headshot.tres" id="c_headshot"]
+[ext_resource type="Resource" path="res://resources/weapons/handgun/mag_dump.tres" id="c_mag_dump"]
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_name = "Handgun"
+description = "A police sidearm pried from a patrol car. Reliable, if you can find the rounds."
+pool = Array[ExtResource("2_card")]([ExtResource("c_shot"), ExtResource("c_double_shot"), ExtResource("c_reload"), ExtResource("c_pistol_whip"), ExtResource("c_covering_fire"), ExtResource("c_hollow_point"), ExtResource("c_tactical_reload"), ExtResource("c_steady_aim"), ExtResource("c_headshot"), ExtResource("c_mag_dump")])
+kit = Array[ExtResource("2_card")]([ExtResource("c_shot"), ExtResource("c_shot"), ExtResource("c_reload"), ExtResource("c_pistol_whip")])
+magazine_size = 6
+starting_reserve = 6
+ammo_per_pickup = 4

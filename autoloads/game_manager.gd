@@ -109,6 +109,20 @@ func open_treasure() -> void:
 	_set_player_frozen(true)
 	# Chests always hold a locked card, while any are left.
 	await UiManager.choose_card_reward("Treasure! Choose a card", CardLibrary.TREASURE_DISCOVERY_CHANCE)
+	# ...a box of rounds for the gun...
+	var rounds := RunManager.pick_up_ammo()
+	if rounds > 0:
+		UiManager.show_toast("Ammo!  +%d %s rounds" % [rounds, RunManager.weapon.weapon_name])
+	# ...and sometimes another weapon.
+	var others := WeaponLibrary.ALL.filter(func(w): return w != RunManager.weapon)
+	if not others.is_empty() and randf() < WeaponLibrary.WEAPON_FIND_CHANCE:
+		var found: WeaponData = others.pick_random()
+		if await UiManager.choose_weapon(found):
+			RunManager.swap_weapon(found)
+			if Progress.unlock_weapon(found):
+				UiManager.show_toast("New weapon unlocked: %s" % found.weapon_name)
+			else:
+				UiManager.show_toast("Equipped the %s" % found.weapon_name)
 	_set_player_frozen(false)
 
 ## Stops exploration movement while a menu is open.

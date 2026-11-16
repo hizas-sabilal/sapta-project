@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_card")
-card_name = "Parry"
+card_name = "Sidestep"
 type = 1
 cost = 1
 block = 3
 weaken = 3
-description = "Turn their blow aside."
+description = "Let the lunge go past you."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

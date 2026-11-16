@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Knockdown"
+type = 3
+cost = 2
+damage = 10
+weaken = 8
+ammo = 1
+unlock_cost = 40
+description = "Put it on the floor and keep it there."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

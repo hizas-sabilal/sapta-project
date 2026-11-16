@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Skull Splitter"
+cost = 3
+damage = 22
+weaken = 4
+rarity = 1
+unlock_cost = 85
+description = "It doesn't get back up."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

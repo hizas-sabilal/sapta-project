@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_card")
-card_name = "Bulwark Slam"
+card_name = "Body Slam"
 type = 1
 cost = 2
 damage = 8
 block = 8
 rarity = 1
 unlock_cost = 80
-description = "Hit them with the whole wall."
+description = "Put them through the drywall."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

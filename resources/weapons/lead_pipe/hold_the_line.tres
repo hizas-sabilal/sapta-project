@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Hold the Line"
+type = 1
+cost = 1
+block = 4
+weaken = 2
+unlock_cost = 30
+description = "Pipe across the doorway."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"
