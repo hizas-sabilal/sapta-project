@@ -30,8 +30,13 @@ var _hovered := false
 var _focused := false ## Keyboard cursor is on this card.
 var _playable := true
 
+var _spent := false ## Already resolved this turn; waits to be discarded.
+
 var _body: Panel
 var _frame_style: StyleBoxFlat
+var _order_badge: Panel
+var _order_label: Label
+var _trigger_tween: Tween
 
 func _ready() -> void:
 	custom_minimum_size = CARD_SIZE + Vector2(0, LIFT_ROOM)
@@ -48,6 +53,7 @@ func _build() -> void:
 
 	_body = Panel.new()
 	_body.size = CARD_SIZE
+	_body.pivot_offset = CARD_SIZE / 2.0 # Trigger shake scales / tilts around the center.
 	_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_frame_style = StyleBoxFlat.new()
 	_frame_style.bg_color = color.darkened(0.78)
@@ -135,6 +141,29 @@ func _build() -> void:
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	gem.add_child(cost_label)
 
+	# Play-order badge over the art's top-right corner; shown while selected.
+	_order_badge = Panel.new()
+	_order_badge.position = Vector2(CARD_SIZE.x - 48, 44)
+	_order_badge.size = Vector2(36, 36)
+	_order_badge.pivot_offset = _order_badge.size / 2.0
+	_order_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var badge_style := StyleBoxFlat.new()
+	badge_style.bg_color = Color(0.12, 0.1, 0.08)
+	badge_style.set_corner_radius_all(18)
+	badge_style.set_border_width_all(3)
+	badge_style.border_color = SELECTED_BORDER
+	badge_style.shadow_color = Color(0, 0, 0, 0.6)
+	badge_style.shadow_size = 4
+	_order_badge.add_theme_stylebox_override("panel", badge_style)
+	_body.add_child(_order_badge)
+	_order_label = _label("", 20, SELECTED_BORDER, HORIZONTAL_ALIGNMENT_CENTER)
+	_order_label.size = _order_badge.size
+	_order_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_order_label.add_theme_constant_override("outline_size", 3)
+	_order_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_order_badge.add_child(_order_label)
+	_order_badge.hide()
+
 func _label(text: String, font_size: int, color: Color, align: HorizontalAlignment) -> Label:
 	var label := Label.new()
 	label.text = text
@@ -166,8 +195,62 @@ func set_focused(value: bool) -> void:
 	_focused = value
 	_update_look()
 
+## Shows this card's place in the play order (1 = plays first); 0 hides it.
+func set_order(order: int) -> void:
+	if _order_badge == null:
+		return
+	var was_visible := _order_badge.visible
+	_order_badge.visible = order > 0
+	_order_label.text = str(order)
+	if order > 0 and not was_visible: # Pop in when the card is picked.
+		_order_badge.scale = Vector2(0.4, 0.4)
+		_order_badge.create_tween().tween_property(_order_badge, "scale", Vector2.ONE, 0.18) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+## Marks the card as resolving: it punches up, shakes and glows. Await the
+## returned signal to wait for the wind-up before applying the card's effects.
+func play_trigger() -> Signal:
+	if _body == null:
+		return get_tree().process_frame
+	z_index = 1 # Draw over neighbours while enlarged.
+	_frame_style.border_color = Color.WHITE
+	_frame_style.shadow_color = Color(1.0, 0.85, 0.3, 0.8)
+	_frame_style.shadow_size = 16
+	_frame_style.shadow_offset = Vector2.ZERO
+	if _trigger_tween:
+		_trigger_tween.kill()
+	_trigger_tween = create_tween()
+	_trigger_tween.tween_property(_body, "scale", Vector2(1.12, 1.12), 0.08).set_ease(Tween.EASE_OUT)
+	var shakes := [-7.0, 6.0, -5.0, 4.0, -2.0, 0.0]
+	for i in shakes.size():
+		var x: float = shakes[i]
+		_trigger_tween.tween_property(_body, "position:x", x, 0.035)
+		_trigger_tween.parallel().tween_property(_body, "rotation", deg_to_rad(x * 0.5), 0.035)
+	_trigger_tween.tween_property(_body, "scale", Vector2(1.06, 1.06), 0.1)
+	return _trigger_tween.finished
+
+## The card has finished resolving: settle back and dim until discarded.
+func finish_trigger() -> void:
+	_spent = true
+	z_index = 0
+	if _body == null:
+		return
+	if _trigger_tween:
+		_trigger_tween.kill()
+	_trigger_tween = create_tween().set_parallel(true)
+	_trigger_tween.tween_property(_body, "scale", Vector2.ONE, 0.12)
+	_trigger_tween.tween_property(_body, "position:x", 0.0, 0.12)
+	_trigger_tween.tween_property(_body, "rotation", 0.0, 0.12)
+	_frame_style.shadow_color = Color(0, 0, 0, 0.5)
+	_frame_style.shadow_size = 6
+	_frame_style.shadow_offset = Vector2(0, 3)
+	_update_look()
+
 func _update_look() -> void:
 	if _body == null:
+		return
+	if _spent:
+		modulate = Color(0.5, 0.5, 0.55, 0.7)
 		return
 	var lift := 0.0
 	if selected:
