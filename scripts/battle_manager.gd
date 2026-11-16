@@ -310,7 +310,13 @@ func select_card(card):
 		card.set_selected(true)
 	else:
 		_popup(ap_dots.get_global_rect().get_center() + Vector2(0, 30), "Not enough AP", Color(1, 0.6, 0.4))
+	_refresh_order()
 	_refresh_playable()
+
+## Numbers the selected cards 1, 2, 3... in the order they will play.
+func _refresh_order() -> void:
+	for card in hand:
+		card.set_order(selected_cards.find(card) + 1)
 
 func _on_execute_button_pressed() -> void:
 	if busy or battle_over:
@@ -322,7 +328,9 @@ func execute_turn():
 	_set_busy(true)
 
 	for card in selected_cards:
+		await card.play_trigger() # Show which card is resolving before its effects land.
 		await _play_card(card.data)
+		card.finish_trigger()
 		if enemy.is_dead():
 			break # Remaining cards are not needed.
 		await get_tree().create_timer(0.25).timeout
