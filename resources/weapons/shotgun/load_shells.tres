@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Load Shells"
+type = 4
+cost = 1
+block = 2
+reload = 2
+offered = false
+description = "Back to the wall. Thumb two shells in."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"

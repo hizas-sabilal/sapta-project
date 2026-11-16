@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://resources/weapons/WeaponData.gd" id="1_weapon"]
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="2_card"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/slash.tres" id="c_slash"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/stab.tres" id="c_stab"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/double_stab.tres" id="c_double_stab"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/serrated_edge.tres" id="c_serrated_edge"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/heavy_strike.tres" id="c_heavy_strike"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/flurry.tres" id="c_flurry"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/crippling_cut.tres" id="c_crippling_cut"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/hemorrhage.tres" id="c_hemorrhage"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/blood_drain.tres" id="c_blood_drain"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/execution.tres" id="c_execution"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/thousand_cuts.tres" id="c_thousand_cuts"]
+[ext_resource type="Resource" path="res://resources/weapons/knife/vampire_kiss.tres" id="c_vampire_kiss"]
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_name = "Combat Knife"
+description = "Short, quiet, and it never needs reloading. You'll have to get close."
+pool = Array[ExtResource("2_card")]([ExtResource("c_slash"), ExtResource("c_stab"), ExtResource("c_double_stab"), ExtResource("c_serrated_edge"), ExtResource("c_heavy_strike"), ExtResource("c_flurry"), ExtResource("c_crippling_cut"), ExtResource("c_hemorrhage"), ExtResource("c_blood_drain"), ExtResource("c_execution"), ExtResource("c_thousand_cuts"), ExtResource("c_vampire_kiss")])
+kit = Array[ExtResource("2_card")]([ExtResource("c_slash"), ExtResource("c_stab"), ExtResource("c_double_stab"), ExtResource("c_serrated_edge")])

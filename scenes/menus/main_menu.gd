@@ -27,6 +27,14 @@ func _ready() -> void:
 	$Panel/CenterContainer/VBoxContainer.add_child(_deck_button)
 	$Panel/CenterContainer/VBoxContainer.move_child(_deck_button, _start_button.get_index() + 1)
 
+	# Starting weapon, right under Deck.
+	var equipment_button := Button.new()
+	equipment_button.text = "Equipment"
+	equipment_button.custom_minimum_size = _start_button.custom_minimum_size
+	equipment_button.pressed.connect(func(): _open_screen(EquipmentMenu.new(), equipment_button))
+	$Panel/CenterContainer/VBoxContainer.add_child(equipment_button)
+	$Panel/CenterContainer/VBoxContainer.move_child(equipment_button, _deck_button.get_index() + 1)
+
 	_start_button.grab_focus() # Lets the menu be driven with arrow keys + Enter.
 
 func _update_coins(coins: int) -> void:

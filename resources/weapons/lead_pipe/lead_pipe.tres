@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://resources/weapons/WeaponData.gd" id="1_weapon"]
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="2_card"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/pipe_swing.tres" id="c_pipe_swing"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/crack_skull.tres" id="c_crack_skull"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/brace.tres" id="c_brace"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/kneecap.tres" id="c_kneecap"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/rusty_jab.tres" id="c_rusty_jab"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/overhead_smash.tres" id="c_overhead_smash"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/wild_swings.tres" id="c_wild_swings"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/hold_the_line.tres" id="c_hold_the_line"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/skull_splitter.tres" id="c_skull_splitter"]
+[ext_resource type="Resource" path="res://resources/weapons/lead_pipe/batter.tres" id="c_batter"]
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_name = "Lead Pipe"
+description = "Torn from a flooded basement. Never jams, never runs dry."
+pool = Array[ExtResource("2_card")]([ExtResource("c_pipe_swing"), ExtResource("c_crack_skull"), ExtResource("c_brace"), ExtResource("c_kneecap"), ExtResource("c_rusty_jab"), ExtResource("c_overhead_smash"), ExtResource("c_wild_swings"), ExtResource("c_hold_the_line"), ExtResource("c_skull_splitter"), ExtResource("c_batter")])
+kit = Array[ExtResource("2_card")]([ExtResource("c_pipe_swing"), ExtResource("c_pipe_swing"), ExtResource("c_crack_skull"), ExtResource("c_rusty_jab")])
+unlock_cost = 40

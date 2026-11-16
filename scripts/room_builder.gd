@@ -83,7 +83,7 @@ static func build(level: Node, room: Dictionary) -> void:
 		_place(world, CHEST.new(), layout.ground_point(layout.content_x))
 
 	if not is_boss:
-		_place_coins(world, layout, rng)
+		_place_coins(world, layout, rng, _place_ammo(world, layout, rng))
 
 	if layout.exit_x >= 0: # The boss arena has no exit; beating the boss ends the run.
 		var exit = EXIT.new()
@@ -100,8 +100,25 @@ static func _monster_count(rng: RandomNumberGenerator, difficulty: float) -> int
 
 ## Some rooms (Progress.coin_room_chance()) have a few coins: floating over
 ## open ground, and over spike traps so jumping them pays off.
+## Some rooms (WeaponLibrary.AMMO_ROOM_CHANCE) have an ammo box on open ground,
+## while a gun is equipped. Returns the column it took (-1 if none), so coins
+## don't land on it.
+static func _place_ammo(world: Node2D, layout: RoomGenerator.Layout,
+		rng: RandomNumberGenerator) -> int:
+	if not RunManager.weapon.uses_ammo() or rng.randf() >= WeaponLibrary.AMMO_ROOM_CHANCE:
+		return -1
+	# Same rules as coins: clear of the chest / campfire and before the exit door.
+	var columns := Array(layout.flat_spots).filter(func(col):
+		return absi(col - layout.content_x) > 1 and col < layout.exit_x - 1)
+	if columns.is_empty():
+		return -1
+	var col: int = columns[rng.randi_range(0, columns.size() - 1)]
+	var box := AmmoBox.new()
+	_place(world, box, layout.ground_point(col))
+	return col
+
 static func _place_coins(world: Node2D, layout: RoomGenerator.Layout,
-		rng: RandomNumberGenerator) -> void:
+		rng: RandomNumberGenerator, ammo_column := -1) -> void:
 	if rng.randf() >= Progress.coin_room_chance():
 		return
 	var spots: Array[Vector2] = []
@@ -113,7 +130,7 @@ static func _place_coins(world: Node2D, layout: RoomGenerator.Layout,
 	for col in layout.flat_spots:
 		# Leave the chest / campfire spot alone, and nothing at or past the exit
 		# door: touching the door leaves the room, so those could never be reached.
-		if absi(col - layout.content_x) > 1 and col < layout.exit_x - 1:
+		if absi(col - layout.content_x) > 1 and col < layout.exit_x - 1 and col != ammo_column:
 			spots.append(layout.ground_point(col) - Vector2(0, COIN_GROUND_HEIGHT))
 	# Shuffle with the room's rng so a run seed always gives the same coins.
 	for i in range(spots.size() - 1, 0, -1):

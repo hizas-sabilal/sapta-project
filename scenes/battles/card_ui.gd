@@ -19,7 +19,10 @@ const TYPE_COLORS := {
 	CardData.Type.DEFENSE: Color(0.27, 0.52, 0.92),
 	CardData.Type.HEAL: Color(0.3, 0.74, 0.42),
 	CardData.Type.DEBUFF: Color(0.62, 0.38, 0.88),
+	CardData.Type.UTILITY: Color(0.78, 0.6, 0.28),
 }
+const BRASS := Color(0.9, 0.7, 0.32)
+const EMPTY_COLOR := Color(1.0, 0.45, 0.35)
 const SELECTED_BORDER := Color(1.0, 0.85, 0.3)
 const FOCUS_BORDER := Color(1.0, 1.0, 1.0)
 
@@ -37,6 +40,8 @@ var _frame_style: StyleBoxFlat
 var _order_badge: Panel
 var _order_label: Label
 var _trigger_tween: Tween
+var _empty_tag: Label ## "RELOAD" / "EMPTY": this gun card can't fire right now (see set_shot()).
+var _ammo_style: StyleBoxFlat
 
 func _ready() -> void:
 	custom_minimum_size = CARD_SIZE + Vector2(0, LIFT_ROOM)
@@ -67,11 +72,13 @@ func _build() -> void:
 	add_child(_body)
 
 	# Name across the top, right of the cost gem.
-	var name_size := 17 if data.card_name.length() <= 12 else 14 # Long names still fit.
+	# Long names still fit (gun cards have less room: the ammo badge takes a corner).
+	var name_size := 17 if data.card_name.length() <= (8 if data.ammo > 0 else 12) else 14
 	var name_label := _label(data.card_name, name_size, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.position = Vector2(36, 8)
-	name_label.size = Vector2(CARD_SIZE.x - 44, 26)
+	# Leave the top-right corner to the ammo badge on gun cards.
+	name_label.size = Vector2(CARD_SIZE.x - (72 if data.ammo > 0 else 44), 26)
 	name_label.add_theme_constant_override("outline_size", 4)
 	name_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_body.add_child(name_label)
@@ -100,6 +107,8 @@ func _build() -> void:
 	ribbon.add_theme_stylebox_override("panel", ribbon_style)
 	_body.add_child(ribbon)
 	var ribbon_text := data.type_name().to_upper() + ("  -  RARE" if data.is_rare() else "")
+	if data.ammo > 0: # Gun art already says "attack"; the rounds matter more (and fit).
+		ribbon_text = ("RARE  -  " if data.is_rare() else "") + data.ammo_text().to_upper()
 	var type_label := _label(ribbon_text, 11, color.lightened(0.6), HORIZONTAL_ALIGNMENT_CENTER)
 	type_label.size = ribbon.size
 	type_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -141,6 +150,9 @@ func _build() -> void:
 	cost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	gem.add_child(cost_label)
 
+	if data.ammo > 0:
+		_build_ammo_badge()
+
 	# Play-order badge over the art's top-right corner; shown while selected.
 	_order_badge = Panel.new()
 	_order_badge.position = Vector2(CARD_SIZE.x - 48, 44)
@@ -163,6 +175,66 @@ func _build() -> void:
 	_order_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_order_badge.add_child(_order_label)
 	_order_badge.hide()
+
+## Brass tag in the top-right corner: a bullet and the rounds the card fires.
+## Also builds the hidden "EMPTY" tag shown over the art when it would click.
+func _build_ammo_badge() -> void:
+	var badge := Panel.new()
+	badge.position = Vector2(CARD_SIZE.x - 40, -6)
+	badge.size = Vector2(46, 30)
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ammo_style = StyleBoxFlat.new()
+	_ammo_style.bg_color = Color(0.16, 0.12, 0.07)
+	_ammo_style.set_corner_radius_all(8)
+	_ammo_style.set_border_width_all(3)
+	_ammo_style.border_color = BRASS
+	badge.add_theme_stylebox_override("panel", _ammo_style)
+	_body.add_child(badge)
+	var bullet := BulletIcon.new()
+	bullet.position = Vector2(7, 5)
+	bullet.size = Vector2(10, 20)
+	bullet.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(bullet)
+	var count := _label(str(data.ammo), 18, BRASS, HORIZONTAL_ALIGNMENT_CENTER)
+	count.position = Vector2(18, 0)
+	count.size = Vector2(24, 30)
+	count.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_child(count)
+
+	_empty_tag = _label("EMPTY", 26, EMPTY_COLOR, HORIZONTAL_ALIGNMENT_CENTER)
+	_empty_tag.add_theme_constant_override("outline_size", 7)
+	_empty_tag.add_theme_color_override("font_outline_color", Color.BLACK)
+	_empty_tag.position = Vector2(10, 64)
+	_empty_tag.size = Vector2(CARD_SIZE.x - 20, 40)
+	_empty_tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_empty_tag.rotation_degrees = -10
+	_empty_tag.pivot_offset = _empty_tag.size / 2.0
+	_empty_tag.hide()
+	_body.add_child(_empty_tag)
+
+## What this gun card would do if played now (a WeaponLibrary.Shot): fire
+## (no tag), reload instead ("RELOAD") or click ("EMPTY"). No-op on other cards.
+func set_shot(shot: int) -> void:
+	if _empty_tag == null:
+		return
+	_empty_tag.visible = shot != WeaponLibrary.Shot.FIRES
+	var color := BRASS if shot == WeaponLibrary.Shot.RELOADS else EMPTY_COLOR
+	_empty_tag.text = "RELOAD" if shot == WeaponLibrary.Shot.RELOADS else "EMPTY"
+	_empty_tag.add_theme_color_override("font_color", color)
+	_ammo_style.border_color = BRASS if shot == WeaponLibrary.Shot.FIRES else color
+
+## A brass cartridge, drawn in code.
+class BulletIcon extends Control:
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		draw_rect(Rect2(0, h * 0.4, w, h * 0.6), Color(0.9, 0.7, 0.32)) # case
+		draw_rect(Rect2(0, h * 0.86, w, h * 0.14), Color(0.6, 0.42, 0.15)) # rim
+		var tip := PackedVector2Array()
+		for i in 9: # Rounded lead tip.
+			var a := PI + PI * i / 8.0
+			tip.append(Vector2(w / 2.0 + cos(a) * w / 2.0, h * 0.4 + sin(a) * h * 0.4))
+		draw_colored_polygon(tip, Color(0.72, 0.72, 0.76))
 
 func _label(text: String, font_size: int, color: Color, align: HorizontalAlignment) -> Label:
 	var label := Label.new()

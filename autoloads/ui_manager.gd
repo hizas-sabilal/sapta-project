@@ -47,6 +47,13 @@ func choose_card_reward(title: String = "",
 	_ui_container.add_child(screen)
 	return await screen.finished
 
+## Offers a found weapon; returns true if the player takes it.
+func choose_weapon(weapon: WeaponData) -> bool:
+	var screen := WeaponFindScreen.new()
+	screen.weapon = weapon
+	_ui_container.add_child(screen)
+	return await screen.finished
+
 ## Big centered text over the game for `seconds`; await it to wait it out.
 func show_message(text: String, seconds: float) -> void:
 	var label := Label.new()

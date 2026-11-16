@@ -16,6 +16,7 @@ var enemy: Node2D # Represents the active enemy
 
 var selected_cards = []
 var discard_pile = []
+var _holstered := false ## Gun cards were taken out (see _holster_if_empty()).
 
 const MAX_CARD_IN_HAND = 3
 const ACTION_POINT = 3
@@ -30,6 +31,8 @@ var battle_over := false
 
 var player_hp_bar: HpBar
 var ap_dots: ApDots
+var ammo_label: Label ## Equipped weapon, magazine and spare rounds.
+const AMMO_COLOR := Color(0.95, 0.78, 0.45)
 var enemy_name_label: Label
 var enemy_hp_bar: HpBar
 var enemy_intent_label: Label
@@ -107,8 +110,9 @@ func _apply_run_modifiers() -> void:
 		enemy.apply_modifiers(hp_scale)
 
 func setup_deck() -> void:
-	# Copy, so drawing/discarding during battle never touches the run's deck.
-	deck = RunManager.deck.duplicate()
+	# A fresh copy (run deck + weapon cards), so drawing/discarding during battle
+	# never touches the run's deck.
+	deck = RunManager.battle_deck()
 	deck.shuffle()
 
 ## Status panels in the top corners (the hand sits top-center):
@@ -127,6 +131,9 @@ func _create_status_labels() -> void:
 	ap_dots.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	ap_row.add_child(ap_dots)
 	left.add_child(ap_row)
+	ammo_label = _small_label("")
+	ammo_label.add_theme_color_override("font_color", AMMO_COLOR)
+	left.add_child(ammo_label)
 
 	var right := _status_box(Vector2(1280 - 24 - 280, 16))
 	enemy_name_label = _title_label("")
@@ -170,6 +177,7 @@ func _process(_delta: float) -> void:
 	if player_hp_bar:
 		player_hp_bar.set_values(player.hp, player.max_hp, player.block)
 		ap_dots.set_values(max_ap - used_AP, max_ap)
+		ammo_label.text = RunManager.ammo_text()
 	if enemy_hp_bar and enemy:
 		enemy_name_label.text = enemy.enemy_name
 		enemy_hp_bar.set_values(enemy.current_hp, enemy.max_hp)
@@ -254,7 +262,23 @@ func _update_focus() -> void:
 	for i in hand.size():
 		hand[i].set_focused(_show_focus and not busy and not battle_over and i == _focus_index)
 
+## Gun completely dry: its cards leave the hand, draw and discard pile for the
+## rest of this battle (the run's deck is untouched; they're back next fight
+## once rounds are found).
+func _holster_if_empty() -> void:
+	if not RunManager.out_of_ammo() or _holstered:
+		return
+	_holstered = true
+	deck = deck.filter(func(c): return not WeaponLibrary.is_gun_card(c))
+	discard_pile = discard_pile.filter(func(c): return not WeaponLibrary.is_gun_card(c))
+	for card in hand.duplicate():
+		if WeaponLibrary.is_gun_card(card.data):
+			hand.erase(card)
+			card.queue_free()
+	_popup_at(player, "Out of ammo!", AMMO_COLOR)
+
 func draw_hand():
+	_holster_if_empty()
 	while hand.size() < MAX_CARD_IN_HAND:
 		if deck.is_empty():
 			if discard_pile.is_empty():
@@ -273,10 +297,21 @@ func draw_hand():
 		hand_container.add_child(card_ui)
 	_refresh_playable()
 
-## Dims cards that don't fit in the AP left this turn.
+## Dims cards that don't fit in the AP left this turn, and flags gun cards
+## that would reload instead of firing (or click): selected ones in their
+## place in the play order, the others as if picked next.
 func _refresh_playable() -> void:
+	var plan := WeaponLibrary.resolve_ammo(selected_cards.map(func(c): return c.data), RunManager.gun())
 	for card in hand:
 		card.set_playable(not busy and used_AP + card.data.cost <= max_ap)
+		var shot := WeaponLibrary.Shot.FIRES
+		if card.data.ammo > 0:
+			var i := selected_cards.find(card)
+			if i >= 0:
+				shot = plan.shots[i]
+			else:
+				shot = WeaponLibrary.fire(card.data, plan.gun.duplicate())
+		card.set_shot(shot)
 	execute_button.set_state(selected_cards.size(), used_AP, max_ap)
 
 func _set_busy(value: bool) -> void:
@@ -350,10 +385,21 @@ func execute_turn():
 	enemy.tick_expose()
 	enemy_turn()
 
-## Applies one card's effects in CardData order: damage (x hits, with
-## lifesteal), block, heal, bleed, weaken, expose. Stops early if the enemy dies.
+## Applies one card's effects in CardData order: fire rounds, damage (x hits,
+## with lifesteal), block, heal, bleed, weaken, expose, reload. Stops early if
+## the enemy dies. A gun card without enough rounds reloads instead (or
+## clicks with no spare rounds) and does nothing else; see WeaponLibrary.fire().
 func _play_card(data: CardData) -> void:
 	print("Play ", data.card_name)
+
+	var gun := RunManager.gun()
+	var shot := WeaponLibrary.fire(data, gun)
+	RunManager.set_gun(gun)
+	if shot != WeaponLibrary.Shot.FIRES:
+		var text := "Reloading..." if shot == WeaponLibrary.Shot.RELOADS else "*click*  Empty!"
+		_popup_at(player, text, AMMO_COLOR)
+		await get_tree().create_timer(0.5).timeout
+		return
 
 	if data.damage > 0:
 		for i in data.hits:
@@ -387,6 +433,18 @@ func _play_card(data: CardData) -> void:
 	if data.expose > 0:
 		enemy.expose += data.expose
 		_popup_at(enemy, "Exposed", Color(0.8, 0.6, 1))
+
+	if data.reload > 0:
+		gun = RunManager.gun()
+		var full: bool = gun.mag >= gun.cap
+		var loaded := WeaponLibrary.apply_reload(data, gun)
+		RunManager.set_gun(gun)
+		if loaded > 0:
+			_popup_at(player, "Reloaded +%d" % loaded, AMMO_COLOR)
+		elif full:
+			_popup_at(player, "Already full", AMMO_COLOR)
+		else:
+			_popup_at(player, "No spare ammo!", AMMO_COLOR)
 
 func enemy_turn():
 	# Bleed hurts before the enemy can act.

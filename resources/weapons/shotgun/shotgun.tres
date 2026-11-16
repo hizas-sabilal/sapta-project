@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" path="res://resources/weapons/WeaponData.gd" id="1_weapon"]
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="2_card"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/buckshot.tres" id="c_buckshot"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/slug.tres" id="c_slug"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/load_shells.tres" id="c_load_shells"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/stock_bash.tres" id="c_stock_bash"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/point_blank.tres" id="c_point_blank"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/dragons_breath.tres" id="c_dragons_breath"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/knockdown.tres" id="c_knockdown"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/dig_in.tres" id="c_dig_in"]
+[ext_resource type="Resource" path="res://resources/weapons/shotgun/rapid_pump.tres" id="c_rapid_pump"]
+
+[resource]
+script = ExtResource("1_weapon")
+weapon_name = "Shotgun"
+description = "Pump-action, two shells in the tube. Loud enough to wake the whole block."
+pool = Array[ExtResource("2_card")]([ExtResource("c_buckshot"), ExtResource("c_slug"), ExtResource("c_load_shells"), ExtResource("c_stock_bash"), ExtResource("c_point_blank"), ExtResource("c_dragons_breath"), ExtResource("c_knockdown"), ExtResource("c_dig_in"), ExtResource("c_rapid_pump")])
+kit = Array[ExtResource("2_card")]([ExtResource("c_buckshot"), ExtResource("c_slug"), ExtResource("c_load_shells"), ExtResource("c_stock_bash")])
+magazine_size = 2
+starting_reserve = 6
+ammo_per_pickup = 3
+unlock_cost = 70

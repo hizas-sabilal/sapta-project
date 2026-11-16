@@ -2,43 +2,65 @@ class_name CardLibrary
 ## Every card in the game, plus the rules shared by runs, the Deck menu and
 ## the balance sim: weighted reward offers and starting-deck limits.
 ## Which cards are unlocked lives in Progress (it's saved between runs).
+##
+## A card is either general (below: usable with any weapon) or belongs to one
+## weapon's pool (WeaponData.pool). A deck holds general cards plus cards of
+## its weapon only; see cards_for().
 
-## Every card. A new card only needs adding here (and its .tres).
-const ALL: Array[CardData] = [
+## General cards. A new general card only needs adding here (and its .tres);
+## a new weapon card goes in its weapon's pool. Card file names must be unique
+## across the game (they're the saved ids).
+const GENERAL: Array[CardData] = [
 	# Unlocked from the start.
-	preload("res://resources/cardsdata/slash.tres"),
-	preload("res://resources/cardsdata/stab.tres"),
-	preload("res://resources/cardsdata/double_stab.tres"),
-	preload("res://resources/cardsdata/heavy_strike.tres"),
-	preload("res://resources/cardsdata/flurry.tres"),
-	preload("res://resources/cardsdata/serrated_edge.tres"),
 	preload("res://resources/cardsdata/block.tres"),
-	preload("res://resources/cardsdata/shield_bash.tres"),
 	preload("res://resources/cardsdata/parry.tres"),
 	preload("res://resources/cardsdata/bandage.tres"),
 	preload("res://resources/cardsdata/intimidate.tres"),
+	preload("res://resources/cardsdata/shield_bash.tres"),
 	# Locked commons (unlock_cost > 0).
 	preload("res://resources/cardsdata/iron_wall.tres"),
 	preload("res://resources/cardsdata/second_wind.tres"),
-	preload("res://resources/cardsdata/blood_drain.tres"),
-	preload("res://resources/cardsdata/hemorrhage.tres"),
 	preload("res://resources/cardsdata/expose.tres"),
-	preload("res://resources/cardsdata/crippling_cut.tres"),
 	# Locked rares.
-	preload("res://resources/cardsdata/execution.tres"),
 	preload("res://resources/cardsdata/bulwark_slam.tres"),
-	preload("res://resources/cardsdata/thousand_cuts.tres"),
-	preload("res://resources/cardsdata/vampire_kiss.tres"),
 ]
 
-## The starting deck before the player builds their own.
-const DEFAULT_DECK: Array[CardData] = [
-	preload("res://resources/cardsdata/bandage.tres"),
+## The general half of every weapon's default starting deck (the other half
+## is the weapon's kit; see WeaponData.default_deck()).
+const DEFAULT_GENERAL: Array[CardData] = [
 	preload("res://resources/cardsdata/block.tres"),
-	preload("res://resources/cardsdata/slash.tres"),
-	preload("res://resources/cardsdata/stab.tres"),
-	preload("res://resources/cardsdata/double_stab.tres"),
+	preload("res://resources/cardsdata/bandage.tres"),
 ]
+
+static var _all: Array[CardData] = []
+
+## Every card in the game: general cards, then each weapon's pool.
+static func all() -> Array[CardData]:
+	if _all.is_empty():
+		_all = GENERAL.duplicate()
+		for weapon in WeaponLibrary.ALL:
+			_all.append_array(weapon.pool)
+	return _all
+
+## The cards a deck with `weapon` can hold: general cards, then its pool.
+static func cards_for(weapon: WeaponData) -> Array[CardData]:
+	var cards := GENERAL.duplicate()
+	cards.append_array(weapon.pool)
+	return cards
+
+## `weapon`'s starting deck until the player builds their own: its kit plus
+## the default general cards.
+static func default_deck(weapon: WeaponData) -> Array[CardData]:
+	var deck := weapon.kit.duplicate()
+	deck.append_array(DEFAULT_GENERAL)
+	return deck
+
+## The weapon a card belongs to, or null for general cards.
+static func weapon_of(card: CardData) -> WeaponData:
+	for weapon in WeaponLibrary.ALL:
+		if weapon.owns(card):
+			return weapon
+	return null
 
 ## Reward offers: a rare is this many times less likely than a common.
 const COMMON_WEIGHT := 4
@@ -49,21 +71,23 @@ const BATTLE_DISCOVERY_CHANCE := 0.2
 const TREASURE_DISCOVERY_CHANCE := 1.0
 
 ## Starting deck limits.
-const DECK_SIZE := 5
+const DECK_SIZE := 6
 const MAX_COPIES := 2
 const MAX_RARE_COPIES := 1
 
 static func by_id(id: String) -> CardData:
-	for card in ALL:
+	for card in all():
 		if card.id() == id:
 			return card
 	return null
 
 ## `count` distinct cards from `pool`, rares less likely. With chance
 ## `discovery_chance` one of them is a random card from `locked` instead.
+## Cards with `offered` off are left out.
 static func roll_offer(pool: Array, count: int, locked: Array = [], discovery_chance := 0.0) -> Array[CardData]:
 	var offer: Array[CardData] = []
-	var left := pool.duplicate()
+	var left := pool.filter(func(c): return c.offered)
+	locked = locked.filter(func(c): return c.offered)
 	while offer.size() < count and not left.is_empty():
 		var pick: CardData = _weighted_pick(left)
 		offer.append(pick)
@@ -106,13 +130,18 @@ static func add_problem(deck: Array, card: CardData) -> String:
 		return "At most %d copies of a card." % MAX_COPIES
 	return ""
 
-## Why `deck` can't start a run, or "" if it's fine.
-static func deck_problem(deck: Array) -> String:
+## Why `deck` can't start a run with `weapon`, or "" if it's fine.
+static func deck_problem(deck: Array, weapon: WeaponData) -> String:
 	if deck.size() != DECK_SIZE:
 		return "The starting deck needs exactly %d cards (has %d)." % [DECK_SIZE, deck.size()]
 	for card in deck:
 		if count_in(deck, card) > max_copies(card):
 			return "Too many copies of %s." % card.card_name
+		var owner := weapon_of(card)
+		if owner != null and owner != weapon:
+			return "%s is a %s card." % [card.card_name, owner.weapon_name]
 	if not deck.any(func(c): return c.damage > 0 or c.bleed > 0):
 		return "The deck needs at least one card that deals damage."
+	if weapon.uses_ammo() and not deck.any(func(c): return c.reload > 0):
+		return "A gun deck needs at least one card that reloads."
 	return ""

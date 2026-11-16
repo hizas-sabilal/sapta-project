@@ -14,7 +14,7 @@ enum RoomType { FIGHT, TREASURE, REST, BOSS }
 
 const ROOM_INFO := {
 	RoomType.FIGHT: {"name": "Fight", "desc": "Battle a monster.\nWin to earn a card."},
-	RoomType.TREASURE: {"name": "Treasure", "desc": "Open a chest and\npick a card."},
+	RoomType.TREASURE: {"name": "Treasure", "desc": "Open a chest: a card,\nammo, maybe a weapon."},
 	RoomType.REST: {"name": "Campfire", "desc": "Rest to recover\n%d%% of your max HP."}, # Filled in by room_desc().
 	RoomType.BOSS: {"name": "Boss", "desc": "The Vampire Lord awaits."},
 }
@@ -42,6 +42,12 @@ var hp: int
 var deck: Array[CardData] = []
 var battles_won := 0
 
+## Equipped weapon. `deck` only holds general cards and this weapon's cards.
+var weapon: WeaponData
+## Rounds in the gun and spare rounds. Both carry over between fights.
+var magazine := 0
+var reserve_ammo := 0
+
 ## Seed for this run's room layouts: each run is different, but a given run
 ## always generates the same rooms (print it to reproduce a layout).
 var run_seed := 0
@@ -55,12 +61,15 @@ func start_new_run() -> void:
 	# Skill tree: Will to Live + Toughness.
 	max_hp = PLAYER_STATS.max_health + Progress.bonus("will") + Progress.bonus("toughness")
 	hp = max_hp
-	deck = Progress.starting_deck()
+	weapon = Progress.starting_weapon()
+	_load_weapon()
+	deck = Progress.starting_deck(weapon)
 	battles_won = 0
 	room_index = 0
 	run_seed = randi()
 	current_room = _make_room(RoomType.FIGHT) # Always open with a fight.
-	print("New run started: seed ", run_seed, ", HP ", hp, "/", max_hp, ", deck of ", deck.size())
+	print("New run started: seed ", run_seed, ", HP ", hp, "/", max_hp, ", deck of ", deck.size(),
+		", ", weapon.weapon_name)
 
 func room_seed() -> int:
 	return hash([run_seed, room_index])
@@ -69,11 +78,68 @@ func add_card(card: CardData) -> void:
 	deck.append(card)
 	print("Added ", card.card_name, " to deck (", deck.size(), " cards)")
 
-## Distinct random cards from the unlocked ones (rares are rarer). With
-## `discovery_chance`, one is a locked card instead; picking it unlocks it.
+# ---------------------------------------------------------------- Equipment
+
+## Swaps in a weapon found mid-run: the old weapon is left behind with its
+## ammo and every one of its cards in the deck; the new one comes loaded,
+## with its starting spare rounds and its kit of cards. General cards stay.
+func swap_weapon(new_weapon: WeaponData) -> void:
+	var old := weapon
+	var kept: Array[CardData] = []
+	for card in deck:
+		if not old.owns(card):
+			kept.append(card)
+	kept.append_array(new_weapon.kit)
+	deck = kept
+	weapon = new_weapon
+	_load_weapon()
+	print("Swapped ", old.weapon_name, " for ", weapon.weapon_name, " (deck of ", deck.size(), ")")
+
+## How many cards in the deck belong to the equipped weapon (lost on a swap).
+func weapon_card_count() -> int:
+	return deck.filter(func(c): return weapon.owns(c)).size()
+
+func _load_weapon() -> void:
+	magazine = weapon.magazine_size
+	reserve_ammo = weapon.starting_reserve
+
+## A fresh copy of the deck for a battle to shuffle.
+func battle_deck() -> Array[CardData]:
+	return deck.duplicate()
+
+## An ammo box for the equipped gun: adds to the reserve. Returns the rounds
+## added (0 with a melee weapon).
+func pick_up_ammo() -> int:
+	if not weapon.uses_ammo():
+		return 0
+	reserve_ammo += weapon.ammo_per_pickup
+	return weapon.ammo_per_pickup
+
+## The gun as WeaponLibrary's ammo rules read it: {mag, reserve, cap}.
+func gun() -> Dictionary:
+	return {"mag": magazine, "reserve": reserve_ammo, "cap": weapon.magazine_size}
+
+## Stores a gun state changed by WeaponLibrary.fire() / apply_reload().
+func set_gun(state: Dictionary) -> void:
+	magazine = state.mag
+	reserve_ammo = state.reserve
+
+## A gun with no rounds left at all (melee weapons never are).
+func out_of_ammo() -> bool:
+	return weapon.uses_ammo() and magazine + reserve_ammo <= 0
+
+## "Handgun 4/6 (+6)", or just the name for melee weapons.
+func ammo_text() -> String:
+	if not weapon.uses_ammo():
+		return weapon.weapon_name
+	return "%s  %d/%d  (+%d)" % [weapon.weapon_name, magazine, weapon.magazine_size, reserve_ammo]
+
+## Distinct random cards from the unlocked ones that fit the equipped weapon
+## (general + its own; rares are rarer). With `discovery_chance`, one is a
+## locked card instead; picking it unlocks it.
 func get_reward_choices(discovery_chance := CardLibrary.BATTLE_DISCOVERY_CHANCE) -> Array[CardData]:
-	return CardLibrary.roll_offer(Progress.unlocked_cards(), REWARD_CHOICES + Progress.bonus("keen_eye"),
-		Progress.locked_cards(), discovery_chance)
+	return CardLibrary.roll_offer(Progress.unlocked_cards(weapon), REWARD_CHOICES + Progress.bonus("keen_eye"),
+		Progress.locked_cards(weapon), discovery_chance)
 
 func is_boss_room() -> bool:
 	return current_room.get("type") == RoomType.BOSS

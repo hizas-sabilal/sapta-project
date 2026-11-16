@@ -1,6 +1,6 @@
 extends Node
 ## Progress that survives between runs: coins, the skill tree, unlocked cards
-## and the starting deck.
+## and weapons, the starting deck and the starting weapon.
 ## Coins are kept even when a run ends in death; spend them in the main
 ## menu's Skills screen. Saved to user://meta_progress.cfg after every change.
 
@@ -8,6 +8,8 @@ signal coins_changed(coins: int)
 signal skills_changed
 ## Unlocked cards or the starting deck changed.
 signal cards_changed
+## Unlocked weapons or the starting weapon changed.
+signal weapons_changed
 
 const SAVE_PATH := "user://meta_progress.cfg"
 
@@ -58,7 +60,9 @@ const SKILLS := [
 var coins := 0
 var _levels := {} ## skill id -> level
 var _unlocked_cards: Array[String] = [] ## ids of cards unlocked by buying or finding them
-var _starting_deck: Array[String] = [] ## card ids; empty = CardLibrary.DEFAULT_DECK
+var _starting_decks := {} ## weapon id -> card ids; missing = the weapon's default deck
+var _unlocked_weapons: Array[String] = [] ## ids of weapons unlocked by buying or finding them
+var _starting_weapon := "" ## weapon id; "" = WeaponLibrary.DEFAULT
 
 func _ready() -> void:
 	_load()
@@ -149,15 +153,16 @@ func describe(id: String) -> String:
 func is_card_unlocked(card: CardData) -> bool:
 	return card.unlock_cost <= 0 or _unlocked_cards.has(card.id())
 
-func unlocked_cards() -> Array[CardData]:
-	return _cards_where(true)
+## Unlocked cards a deck with `weapon` can hold (every weapon's if null).
+func unlocked_cards(weapon: WeaponData = null) -> Array[CardData]:
+	return _cards_where(true, weapon)
 
-func locked_cards() -> Array[CardData]:
-	return _cards_where(false)
+func locked_cards(weapon: WeaponData = null) -> Array[CardData]:
+	return _cards_where(false, weapon)
 
-func _cards_where(unlocked: bool) -> Array[CardData]:
+func _cards_where(unlocked: bool, weapon: WeaponData) -> Array[CardData]:
 	var out: Array[CardData] = []
-	for card in CardLibrary.ALL:
+	for card in (CardLibrary.cards_for(weapon) if weapon else CardLibrary.all()):
 		if is_card_unlocked(card) == unlocked:
 			out.append(card)
 	return out
@@ -182,28 +187,70 @@ func buy_card(card: CardData) -> bool:
 	coins_changed.emit(coins)
 	return true
 
-## The deck a run starts with. Falls back to the default deck if the saved one
-## no longer works (a card was removed from the game, or rules changed).
-func starting_deck() -> Array[CardData]:
+## The deck a run with `weapon` starts with. Falls back to the weapon's
+## default deck if the saved one no longer works (a card was removed from the
+## game, or rules changed).
+func starting_deck(weapon: WeaponData) -> Array[CardData]:
 	var deck: Array[CardData] = []
-	for id in _starting_deck:
+	for id in _starting_decks.get(weapon.id(), []):
 		var card := CardLibrary.by_id(id)
 		if card == null or not is_card_unlocked(card):
-			return CardLibrary.DEFAULT_DECK.duplicate()
+			return CardLibrary.default_deck(weapon)
 		deck.append(card)
-	if deck.is_empty() or CardLibrary.deck_problem(deck) != "":
-		return CardLibrary.DEFAULT_DECK.duplicate()
+	if deck.is_empty() or CardLibrary.deck_problem(deck, weapon) != "":
+		return CardLibrary.default_deck(weapon)
 	return deck
 
-## Saves a starting deck. Only valid decks are accepted.
-func set_starting_deck(deck: Array) -> bool:
-	if CardLibrary.deck_problem(deck) != "":
+## Saves `weapon`'s starting deck. Only valid decks are accepted.
+func set_starting_deck(weapon: WeaponData, deck: Array) -> bool:
+	if CardLibrary.deck_problem(deck, weapon) != "":
 		return false
-	_starting_deck.clear()
+	var ids: Array[String] = []
 	for card in deck:
-		_starting_deck.append(card.id())
+		ids.append(card.id())
+	_starting_decks[weapon.id()] = ids
 	_save()
 	cards_changed.emit()
+	return true
+
+# ---------------------------------------------------------------- Weapons
+
+func is_weapon_unlocked(weapon: WeaponData) -> bool:
+	return weapon.unlock_cost <= 0 or _unlocked_weapons.has(weapon.id())
+
+## Unlocks a weapon for good (found in a chest, or bought). False if it already was.
+func unlock_weapon(weapon: WeaponData) -> bool:
+	if is_weapon_unlocked(weapon):
+		return false
+	_unlocked_weapons.append(weapon.id())
+	_save()
+	weapons_changed.emit()
+	return true
+
+func can_buy_weapon(weapon: WeaponData) -> bool:
+	return not is_weapon_unlocked(weapon) and coins >= weapon.unlock_cost
+
+func buy_weapon(weapon: WeaponData) -> bool:
+	if not can_buy_weapon(weapon):
+		return false
+	coins -= weapon.unlock_cost
+	unlock_weapon(weapon) # Saves.
+	coins_changed.emit(coins)
+	return true
+
+## The weapon a run starts with (the default if the saved one is gone or locked).
+func starting_weapon() -> WeaponData:
+	var weapon := WeaponLibrary.by_id(_starting_weapon)
+	if weapon == null or not is_weapon_unlocked(weapon):
+		return WeaponLibrary.DEFAULT
+	return weapon
+
+func set_starting_weapon(weapon: WeaponData) -> bool:
+	if not is_weapon_unlocked(weapon):
+		return false
+	_starting_weapon = weapon.id()
+	_save()
+	weapons_changed.emit()
 	return true
 
 # ---------------------------------------------------------------- Save
@@ -213,7 +260,9 @@ func _save() -> void:
 	config.set_value("meta", "coins", coins)
 	config.set_value("meta", "skills", _levels)
 	config.set_value("cards", "unlocked", _unlocked_cards)
-	config.set_value("cards", "starting_deck", _starting_deck)
+	config.set_value("cards", "starting_decks", _starting_decks)
+	config.set_value("weapons", "unlocked", _unlocked_weapons)
+	config.set_value("weapons", "starting", _starting_weapon)
 	var err := config.save(SAVE_PATH)
 	if err != OK:
 		push_warning("Could not save progress: %s" % error_string(err))
@@ -231,5 +280,16 @@ func _load() -> void:
 	for id in config.get_value("cards", "unlocked", []):
 		if CardLibrary.by_id(str(id)) != null: # Skip cards that no longer exist.
 			_unlocked_cards.append(str(id))
-	for id in config.get_value("cards", "starting_deck", []):
-		_starting_deck.append(str(id))
+	# (Saves from before weapons had one shared "starting_deck"; it no longer
+	# fits any weapon, so it's dropped and each weapon starts on its default.)
+	var decks = config.get_value("cards", "starting_decks", {})
+	if decks is Dictionary:
+		for weapon_id in decks:
+			var ids: Array[String] = []
+			for id in decks[weapon_id]:
+				ids.append(str(id))
+			_starting_decks[str(weapon_id)] = ids
+	for id in config.get_value("weapons", "unlocked", []):
+		if WeaponLibrary.by_id(str(id)) != null: # Skip weapons that no longer exist.
+			_unlocked_weapons.append(str(id))
+	_starting_weapon = str(config.get_value("weapons", "starting", ""))

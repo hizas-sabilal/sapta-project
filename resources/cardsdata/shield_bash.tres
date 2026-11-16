@@ -4,10 +4,10 @@
 
 [resource]
 script = ExtResource("1_card")
-card_name = "Shield Bash"
+card_name = "Shoulder Charge"
 type = 1
 cost = 1
 damage = 4
 block = 4
-description = "Defense is the best offense."
+description = "Knock them back and keep your guard up."
 metadata/_custom_type_script = "uid://cuyxm6pywcy77"

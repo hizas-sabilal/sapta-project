@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CardData" format=3]
+
+[ext_resource type="Script" uid="uid://cuyxm6pywcy77" path="res://resources/cardsdata/CardData.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_name = "Double Shot"
+cost = 2
+damage = 6
+hits = 2
+weaken = 2
+ammo = 2
+description = "Two in the chest. Just to be sure."
+metadata/_custom_type_script = "uid://cuyxm6pywcy77"
